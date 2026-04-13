@@ -1,0 +1,2777 @@
+<!DOCTYPE html>
+
+<html lang="de"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+<!-- PWA: iOS Safari standalone -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FlexPlan">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0e0f11">
+
+<!-- PWA Manifest -->
+<link rel="manifest" href="manifest.json">
+
+<!-- iOS Icons -->
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
+<link rel="apple-touch-icon" sizes="167x167" href="icon-167.png">
+<link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
+<title>FlexPlan</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:#0e0f11; --bg2:#16181c; --bg3:#1e2026; --bg4:#262830;
+  --border:rgba(255,255,255,0.07); --border2:rgba(255,255,255,0.13);
+  --text:#f0f0f0; --text2:#8a8f9e; --text3:#505564;
+  --accent:#c8f044; --danger:#f87171; --font:'DM Sans',sans-serif; --mono:'DM Mono',monospace;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font);}
+body{max-width:430px;margin:0 auto;min-height:100dvh;display:flex;flex-direction:column;overflow-x:hidden;}
+.view{display:none;flex-direction:column;flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;}
+.view.active{display:flex;}
+
+/* HEADER */
+.header{padding:20px 20px 0;display:flex;justify-content:space-between;align-items:flex-start;flex-shrink:0;}
+.header-title{font-size:22px;font-weight:600;letter-spacing:-.5px;}
+.header-sub{font-size:13px;color:var(--text2);margin-top:2px;}
+.header-badge{background:var(--accent);color:#0e0f11;font-size:11px;font-weight:600;padding:4px 9px;border-radius:20px;}
+
+/* WEEK NAV */
+.week-nav{margin:14px 20px 0;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.week-nav-btn{background:var(--bg3);border:1px solid var(--border2);border-radius:9px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;color:var(--text2);transition:color .15s,border-color .15s;}
+.week-nav-btn:hover{color:var(--accent);border-color:var(--accent);}
+.week-nav-label{font-size:13px;font-weight:500;color:var(--text2);}
+.week-nav-label.current-week{color:var(--accent);}
+
+/* WEEK STRIP */
+.week-strip{margin:10px 20px 0;display:grid;grid-template-columns:repeat(7,1fr);gap:5px;flex-shrink:0;}
+.day-pill{display:flex;flex-direction:column;align-items:center;padding:8px 2px;border-radius:12px;cursor:pointer;transition:background .15s;border:1.5px solid transparent;}
+.day-pill:hover{background:var(--bg3);}
+.day-pill.active{background:var(--accent);}
+.day-pill.today:not(.active){border-color:var(--accent);}
+.day-name{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
+.day-pill.active .day-name{color:#0a0a0a;}
+.day-num{font-size:14px;font-weight:600;color:var(--text2);}
+.day-pill.active .day-num{color:#0a0a0a;}
+.day-pill.today:not(.active) .day-num{color:var(--accent);}
+.day-dots{display:flex;gap:2px;margin-top:5px;height:5px;align-items:center;}
+.day-dot{width:5px;height:5px;border-radius:50%;}
+.day-dot.done{opacity:.35;}
+
+/* PROGRESS */
+.progress-row{margin:12px 20px 0;display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.progress-label{font-size:12px;color:var(--text2);white-space:nowrap;}
+.progress-track{flex:1;height:4px;background:var(--bg4);border-radius:4px;overflow:hidden;}
+.progress-fill{height:100%;background:var(--accent);border-radius:4px;transition:width .4s ease;}
+.progress-count{font-size:12px;font-weight:600;color:var(--accent);font-family:var(--mono);min-width:28px;text-align:right;}
+
+/* HABIT LIST */
+.habit-list{padding:12px 20px 100px;display:flex;flex-direction:column;gap:8px;}
+.habit-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:13px 14px;display:flex;gap:12px;align-items:center;cursor:pointer;transition:border-color .15s,background .15s;}
+.habit-card:hover{border-color:var(--border2);background:var(--bg3);}
+.habit-card.done-card{opacity:.5;}
+.habit-card.rescheduled{border-style:dashed;border-color:var(--border2);}
+.habit-bar{width:3px;height:36px;border-radius:3px;flex-shrink:0;}
+.habit-info{flex:1;min-width:0;}
+.habit-name{font-size:14px;font-weight:500;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.habit-meta{font-size:12px;color:var(--text2);margin-top:2px;}
+.tag{font-size:10px;font-weight:500;padding:2px 7px;border-radius:6px;white-space:nowrap;}
+.tag-video{background:rgba(251,146,60,.15);color:#fb923c;}
+.tag-moved{background:rgba(96,165,250,.15);color:#60a5fa;}
+.tag-plan{background:rgba(200,240,68,.12);color:#c8f044;}
+.habit-actions{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;}
+.checkbox{width:22px;height:22px;border-radius:7px;border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;flex-shrink:0;}
+.checkbox:hover{border-color:var(--accent);}
+.checkbox.checked{background:var(--accent);border-color:var(--accent);}
+.checkbox.checked::after{content:'';width:6px;height:10px;border:2px solid #0a0a0a;border-top:none;border-left:none;transform:rotate(45deg) translateY(-1px);display:block;}
+.move-btn{font-size:10px;color:var(--text3);padding:2px 6px;border-radius:5px;background:var(--bg4);border:none;cursor:pointer;transition:color .15s;font-family:var(--font);}
+.move-btn:hover{color:var(--accent);}
+.empty-state{text-align:center;padding:40px 20px;color:var(--text3);}
+.empty-icon{font-size:36px;margin-bottom:10px;}
+.empty-text{font-size:14px;line-height:1.6;}
+
+/* GYM VIEW */
+.gym-header{padding:20px 20px 0;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;}
+.gym-title{font-size:22px;font-weight:600;letter-spacing:-.5px;}
+.gym-new-btn{background:var(--accent);color:#0a0a0a;border:none;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);}
+.gym-new-btn:hover{opacity:.85;}
+.gym-list{padding:14px 20px 100px;display:flex;flex-direction:column;gap:10px;}
+.gym-session-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;overflow:hidden;cursor:pointer;transition:border-color .15s;}
+.gym-session-card:hover{border-color:var(--border2);}
+.gym-session-head{padding:14px 16px;display:flex;align-items:center;gap:10px;}
+.gym-session-type{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.gym-session-name{font-size:14px;font-weight:500;flex:1;}
+.gym-session-date{font-size:12px;color:var(--text2);}
+.gym-session-meta{font-size:12px;color:var(--text3);padding:0 16px 12px;}
+
+/* SETTINGS VIEW */
+.settings-header{padding:20px 20px 12px;flex-shrink:0;display:flex;justify-content:space-between;align-items:center;}
+.settings-title{font-size:22px;font-weight:600;letter-spacing:-.5px;}
+.add-habit-btn{background:var(--accent);color:#0a0a0a;border:none;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);}
+.add-habit-btn:hover{opacity:.85;}
+.settings-list{padding:0 20px 100px;display:flex;flex-direction:column;gap:10px;}
+.settings-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;overflow:hidden;}
+.settings-card-header{padding:14px;display:flex;align-items:center;gap:10px;cursor:pointer;}
+.settings-card-header:hover{background:var(--bg3);}
+.settings-color-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.settings-habit-name{font-size:14px;font-weight:500;flex:1;}
+.settings-habit-days{font-size:11px;color:var(--text2);}
+.settings-chevron{font-size:12px;color:var(--text3);transition:transform .2s;}
+.settings-card.expanded .settings-chevron{transform:rotate(90deg);}
+.settings-body{display:none;border-top:1px solid var(--border);padding:14px;}
+.settings-card.expanded .settings-body{display:block;}
+.field-label{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin:14px 0 7px;}
+.field-label:first-child{margin-top:0;}
+.text-input{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:9px;padding:9px 12px;font-size:13px;color:var(--text);font-family:var(--font);outline:none;transition:border-color .15s;}
+.text-input:focus{border-color:var(--accent);}
+.text-input::placeholder{color:var(--text3);}
+.day-checkboxes{display:flex;gap:6px;flex-wrap:wrap;}
+.day-check-btn{padding:5px 10px;border-radius:8px;border:1px solid var(--border2);background:var(--bg4);font-size:12px;font-weight:500;color:var(--text2);cursor:pointer;transition:all .15s;font-family:var(--font);}
+.day-check-btn.selected{background:var(--accent);border-color:var(--accent);color:#0a0a0a;}
+.color-picker-row{display:flex;gap:8px;flex-wrap:wrap;}
+.color-swatch{width:26px;height:26px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:transform .15s;}
+.color-swatch:hover{transform:scale(1.15);}
+.color-swatch.selected{border-color:white;transform:scale(1.1);}
+.links-list{display:flex;flex-direction:column;gap:7px;margin-bottom:10px;}
+.link-row{display:flex;gap:7px;align-items:center;}
+.link-row .text-input{flex:1;}
+.link-delete-btn{width:32px;height:32px;border-radius:8px;border:1px solid var(--border2);background:var(--bg4);color:var(--text3);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:color .15s,border-color .15s;}
+.link-delete-btn:hover{color:var(--danger);border-color:var(--danger);}
+.add-link-btn{background:none;border:1px dashed var(--border2);border-radius:9px;padding:8px 12px;font-size:12px;color:var(--text2);cursor:pointer;font-family:var(--font);width:100%;transition:border-color .15s,color .15s;}
+.add-link-btn:hover{border-color:var(--accent);color:var(--accent);}
+.card-actions{display:flex;gap:8px;margin-top:16px;}
+.save-btn{flex:1;background:var(--accent);color:#0a0a0a;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);}
+.save-btn:hover{opacity:.85;}
+.delete-habit-btn{background:none;border:1px solid rgba(248,113,113,.3);border-radius:10px;padding:10px 14px;font-size:13px;color:var(--danger);cursor:pointer;font-family:var(--font);}
+.delete-habit-btn:hover{background:rgba(248,113,113,.08);}
+
+.link-edit-block{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 12px;}
+.plan-edit-list{display:flex;flex-direction:column;gap:6px;margin-bottom:10px;}
+
+/* PLANS EDIT */
+.plan-edit-list{display:flex;flex-direction:column;gap:7px;margin-bottom:10px;}
+.plan-edit-row{display:flex;gap:7px;align-items:center;}
+.plan-edit-row .text-input{flex:1;}
+.plan-edit-row .text-input.short{flex:0 0 80px;}
+
+/* BOTTOM NAV */
+.bottom-nav{background:var(--bg2);border-top:1px solid var(--border);padding:10px 0 16px;display:flex;justify-content:space-around;flex-shrink:0;}
+.nav-item{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:4px 16px;border-radius:10px;transition:background .15s;}
+.nav-item:hover{background:var(--bg3);}
+.nav-icon{font-size:18px;}
+.nav-label{font-size:10px;color:var(--text3);font-weight:500;letter-spacing:.3px;}
+.nav-item.nav-active .nav-label{color:var(--accent);}
+
+/* OVERLAYS */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);display:flex;align-items:flex-end;justify-content:center;z-index:100;opacity:0;pointer-events:none;transition:opacity .2s;}
+.overlay.open{opacity:1;pointer-events:all;}
+.sheet{background:var(--bg2);border-radius:20px 20px 0 0;border:1px solid var(--border2);border-bottom:none;width:100%;max-width:430px;max-height:90dvh;overflow-y:auto;padding:20px 20px 40px;transform:translateY(30px);transition:transform .25s ease;}
+.overlay.open .sheet{transform:translateY(0);}
+.sheet-handle{width:36px;height:4px;background:var(--bg4);border-radius:4px;margin:0 auto 20px;}
+.sheet-title{font-size:18px;font-weight:600;margin-bottom:4px;}
+.sheet-sub{font-size:13px;color:var(--text2);margin-bottom:18px;}
+.section-title{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin:18px 0 8px;}
+.section-title:first-child{margin-top:0;}
+
+/* PLAN BUTTONS in detail */
+.plan-btn-row{display:flex;flex-direction:column;gap:7px;}
+.plan-select-btn{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:13px 14px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:border-color .15s,background .15s;width:100%;font-family:var(--font);text-align:left;}
+.plan-select-btn:hover{border-color:var(--border2);background:var(--bg4);}
+.plan-select-btn.plan-active{border-color:var(--accent);background:rgba(200,240,68,.07);}
+.plan-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.plan-info{flex:1;}
+.plan-name{font-size:14px;font-weight:500;color:var(--text);}
+.plan-duration{font-size:12px;color:var(--text2);margin-top:1px;}
+.plan-arrow{font-size:12px;color:var(--text3);}
+.plan-select-btn.plan-active .plan-arrow{color:var(--accent);}
+
+/* PLAN LINKS SECTION */
+.plan-links-wrap{margin-top:14px;}
+.link-item{display:flex;align-items:center;gap:10px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:7px;cursor:pointer;transition:border-color .15s;text-decoration:none;}
+.link-item:hover{border-color:var(--accent);}
+.link-icon{font-size:15px;flex-shrink:0;}
+.link-label{font-size:13px;color:var(--text);font-weight:500;flex:1;}
+.link-arrow-ext{font-size:12px;color:var(--text3);}
+.notes-box{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;font-size:13px;color:var(--text2);line-height:1.6;}
+.close-btn{width:100%;margin-top:16px;background:var(--bg4);border:1px solid var(--border);border-radius:12px;padding:13px;font-size:14px;color:var(--text2);cursor:pointer;font-family:var(--font);transition:background .15s;}
+.close-btn:hover{background:var(--bg3);color:var(--text);}
+.move-days{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin:12px 0;}
+.move-day-btn{display:flex;flex-direction:column;align-items:center;padding:9px 2px;border-radius:10px;background:var(--bg3);border:1px solid var(--border);cursor:pointer;transition:all .15s;font-family:var(--font);}
+.move-day-btn:hover{border-color:var(--accent);}
+.move-day-btn.current-day{border-color:var(--accent);background:rgba(200,240,68,.08);}
+.move-day-name{font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;}
+.move-day-num{font-size:13px;font-weight:600;color:var(--text);margin-top:2px;}
+.move-day-btn.current-day .move-day-name,.move-day-btn.current-day .move-day-num{color:var(--accent);}
+
+/* GYM SHEET */
+.exercise-block{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:10px;}
+.exercise-name-row{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.exercise-name-input{flex:1;background:var(--bg4);border:1px solid var(--border2);border-radius:8px;padding:8px 11px;font-size:14px;font-weight:500;color:var(--text);font-family:var(--font);outline:none;}
+.exercise-name-input:focus{border-color:var(--accent);}
+.exercise-name-input::placeholder{color:var(--text3);}
+.sets-table{width:100%;border-collapse:collapse;}
+.sets-table th{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;padding:0 6px 6px;text-align:center;}
+.sets-table th:first-child{text-align:left;padding-left:0;}
+.sets-table td{padding:4px 3px;}
+.set-num{font-size:12px;color:var(--text3);font-family:var(--mono);padding-left:0 !important;text-align:left;}
+.set-input{width:100%;background:var(--bg4);border:1px solid var(--border);border-radius:7px;padding:6px 8px;font-size:13px;color:var(--text);font-family:var(--mono);outline:none;text-align:center;}
+.set-input:focus{border-color:var(--accent);}
+.prev-val{font-size:10px;color:var(--text3);text-align:center;padding-top:2px;font-family:var(--mono);}
+.add-set-btn{background:none;border:1px dashed var(--border2);border-radius:8px;padding:6px;font-size:12px;color:var(--text3);cursor:pointer;font-family:var(--font);width:100%;margin-top:8px;transition:border-color .15s,color .15s;}
+.add-set-btn:hover{border-color:var(--accent);color:var(--accent);}
+.add-exercise-btn{background:none;border:1px dashed var(--border2);border-radius:12px;padding:12px;font-size:13px;color:var(--text2);cursor:pointer;font-family:var(--font);width:100%;margin-bottom:10px;transition:border-color .15s,color .15s;}
+.add-exercise-btn:hover{border-color:var(--accent);color:var(--accent);}
+.del-exercise-btn{background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;padding:0 2px;transition:color .15s;}
+.del-exercise-btn:hover{color:var(--danger);}
+
+/* VOLUME BADGE */
+.vol-badge{font-size:11px;font-family:var(--mono);color:var(--text3);padding:3px 8px;background:var(--bg4);border-radius:6px;}
+
+/* STATS ROW in gym session */
+.stats-row{display:flex;gap:8px;margin-bottom:12px;}
+.stat-pill{flex:1;background:var(--bg3);border-radius:9px;padding:8px 10px;text-align:center;}
+.stat-pill-val{font-size:16px;font-weight:600;font-family:var(--mono);color:var(--text);}
+.stat-pill-lbl{font-size:10px;color:var(--text3);margin-top:2px;}
+
+/* EXPORT / IMPORT */
+.data-btn{display:flex;align-items:center;gap:8px;width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:11px;padding:12px 14px;font-size:13px;font-weight:500;color:var(--text);cursor:pointer;font-family:var(--font);transition:border-color .15s,background .15s;margin-bottom:8px;}
+.data-btn:hover{border-color:var(--accent);background:var(--bg4);}
+.data-btn-icon{font-size:16px;flex-shrink:0;}
+.data-btn-info{flex:1;text-align:left;}
+.data-btn-sub{font-size:11px;color:var(--text3);margin-top:1px;}
+.data-section{padding:0 20px 100px;}
+.data-section-title{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin:16px 0 10px;}
+.import-drop{border:1.5px dashed var(--border2);border-radius:12px;padding:24px;text-align:center;color:var(--text3);font-size:13px;cursor:pointer;transition:border-color .15s;margin-bottom:8px;}
+.import-drop:hover{border-color:var(--accent);color:var(--accent);}
+
+/* GYM TEMPLATE EDITOR in settings */
+.gym-tmpl-card{background:var(--bg3);border:1px solid var(--border);border-radius:11px;overflow:hidden;margin-bottom:8px;}
+.gym-tmpl-head{display:flex;align-items:center;gap:10px;padding:11px 13px;cursor:pointer;}
+.gym-tmpl-head:hover{background:var(--bg4);}
+.gym-tmpl-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.gym-tmpl-name{font-size:13px;font-weight:500;flex:1;}
+.gym-tmpl-meta{font-size:11px;color:var(--text3);}
+.gym-tmpl-chev{font-size:11px;color:var(--text3);transition:transform .2s;}
+.gym-tmpl-card.expanded .gym-tmpl-chev{transform:rotate(90deg);}
+.gym-tmpl-body{display:none;border-top:1px solid var(--border);padding:12px;}
+.gym-tmpl-card.expanded .gym-tmpl-body{display:block;}
+.ex-edit-block{background:var(--bg4);border-radius:9px;padding:10px 11px;margin-bottom:7px;}
+.ex-edit-name{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:7px;padding:7px 10px;font-size:13px;font-weight:500;color:var(--text);font-family:var(--font);outline:none;margin-bottom:6px;}
+.ex-edit-name:focus{border-color:var(--accent);}
+.ex-edit-row{display:flex;gap:6px;align-items:center;margin-bottom:5px;}
+.ex-edit-label{font-size:10px;color:var(--text3);width:38px;flex-shrink:0;}
+.ex-edit-input{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:5px 8px;font-size:12px;color:var(--text2);font-family:var(--font);outline:none;}
+.ex-edit-input:focus{border-color:var(--accent);}
+.ex-edit-del{background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:0 3px;flex-shrink:0;}
+.ex-edit-del:hover{color:var(--danger);}
+
+/* PROGRESSION badge */
+.prog-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(200,240,68,.1);border:1px solid rgba(200,240,68,.2);border-radius:8px;padding:4px 9px;font-size:11px;font-weight:600;color:var(--accent);font-family:var(--mono);}
+.prog-phase{font-size:10px;color:var(--text3);margin-left:2px;font-weight:400;}
+
+/* GYM VIDEO LINK */
+.ex-video-row{display:flex;gap:7px;align-items:center;margin-top:8px;}
+.ex-video-input{flex:1;background:var(--bg4);border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:12px;color:var(--text2);font-family:var(--font);outline:none;transition:border-color .15s;}
+.ex-video-input:focus{border-color:var(--accent);}
+.ex-video-input::placeholder{color:var(--text3);}
+.ex-video-open{background:none;border:1px solid var(--border2);border-radius:8px;padding:5px 10px;font-size:12px;color:#fb923c;cursor:pointer;font-family:var(--font);white-space:nowrap;transition:border-color .15s;}
+.ex-video-open:hover{border-color:#fb923c;}
+
+/* TOAST */
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--accent);color:#0a0a0a;font-size:13px;font-weight:600;padding:9px 18px;border-radius:20px;opacity:0;transition:all .3s;pointer-events:none;z-index:200;white-space:nowrap;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:4px;}
+</style>
+</head>
+<body>
+
+<!-- ══ WEEK VIEW ══ -->
+<div class="view" id="view-week">
+  <div class="header">
+    <div>
+      <div class="header-title">FlexPlan</div>
+      <div class="header-sub" id="header-date">Montag, 13. April</div>
+    </div>
+    <div class="header-badge" id="week-badge">KW 16</div>
+  </div>
+  <div class="week-nav">
+    <button class="week-nav-btn" onclick="shiftWeek(-1)">‹</button>
+    <span class="week-nav-label current-week" id="week-nav-label">Diese Woche</span>
+    <button class="week-nav-btn" onclick="shiftWeek(1)">›</button>
+  </div>
+  <div class="week-strip" id="week-strip"><div class="day-pill today active" onclick="selDay(0)">
+      <div class="day-name">Mo</div>
+      <div class="day-num">13</div>
+      <div class="day-dots"><div class="day-dot" style="background:#a78bfa"></div><div class="day-dot" style="background:#fb923c"></div></div></div><div class="day-pill" onclick="selDay(1)">
+      <div class="day-name">Di</div>
+      <div class="day-num">14</div>
+      <div class="day-dots"><div class="day-dot" style="background:#34d399"></div><div class="day-dot" style="background:#2dd4bf"></div></div></div><div class="day-pill" onclick="selDay(2)">
+      <div class="day-name">Mi</div>
+      <div class="day-num">15</div>
+      <div class="day-dots"><div class="day-dot" style="background:#a78bfa"></div></div></div><div class="day-pill" onclick="selDay(3)">
+      <div class="day-name">Do</div>
+      <div class="day-num">16</div>
+      <div class="day-dots"><div class="day-dot" style="background:#34d399"></div><div class="day-dot" style="background:#2dd4bf"></div></div></div><div class="day-pill" onclick="selDay(4)">
+      <div class="day-name">Fr</div>
+      <div class="day-num">17</div>
+      <div class="day-dots"></div></div><div class="day-pill" onclick="selDay(5)">
+      <div class="day-name">Sa</div>
+      <div class="day-num">18</div>
+      <div class="day-dots"><div class="day-dot" style="background:#a78bfa"></div><div class="day-dot" style="background:#2dd4bf"></div><div class="day-dot" style="background:#fb923c"></div></div></div><div class="day-pill" onclick="selDay(6)">
+      <div class="day-name">So</div>
+      <div class="day-num">19</div>
+      <div class="day-dots"></div></div></div>
+  <div class="progress-row">
+    <span class="progress-label" id="progress-label">0 von 2 Einheiten</span>
+    <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+    <span class="progress-count" id="progress-count">0/2</span>
+  </div>
+  <div class="habit-list" id="habit-list"><div class="habit-card" onclick="openDetail(&#39;stretch_0&#39;,&#39;2026-04-12&#39;)">
+      <div class="habit-bar" style="background:#a78bfa"></div>
+      <div class="habit-info">
+        <div class="habit-name">Stretching
+          <span class="tag tag-video">▶</span>
+          
+          <span class="tag tag-plan">Kurz am Morgen</span>
+        </div>
+        <div class="habit-meta">Stretching · Fokus: Hüftöffner, Oberschenkel, Schul…</div>
+      </div>
+      <div class="habit-actions">
+        <div class="checkbox" onclick="toggleDone(event,&#39;stretch_0&#39;,&#39;2026-04-12&#39;)"></div>
+        <button class="move-btn" onclick="openMove(event,&#39;stretch_0&#39;,&#39;2026-04-12&#39;)">↪</button>
+      </div></div><div class="habit-card" onclick="openDetail(&#39;gym_0&#39;,&#39;2026-04-12&#39;)">
+      <div class="habit-bar" style="background:#fb923c"></div>
+      <div class="habit-info">
+        <div class="habit-name">Gym
+          <span class="tag tag-video">▶</span>
+          
+          <span class="tag tag-plan">Kompakt</span>
+        </div>
+        <div class="habit-meta">Gym · Push → Pull → Legs. Immer 5 min Warmup…</div>
+      </div>
+      <div class="habit-actions">
+        <div class="checkbox" onclick="toggleDone(event,&#39;gym_0&#39;,&#39;2026-04-12&#39;)"></div>
+        <button class="move-btn" onclick="openMove(event,&#39;gym_0&#39;,&#39;2026-04-12&#39;)">↪</button>
+      </div></div></div>
+</div>
+
+<!-- ══ GYM VIEW ══ -->
+<div class="view" id="view-gym">
+  <div class="gym-header">
+    <div class="gym-title">🏋️ Gym</div>
+    <button class="gym-new-btn" onclick="openNewSession()">+ Session</button>
+  </div>
+  <div class="gym-list" id="gym-list"><div class="empty-state"><div class="empty-icon">🏋️</div>
+      <div class="empty-text">Noch keine Gym-Session.<br>Tippe "+ Session" um loszulegen.</div></div></div>
+</div>
+
+<!-- ══ DATA VIEW ══ -->
+<div class="view" id="view-data">
+  <div class="settings-header">
+    <div class="settings-title">💾 Daten</div>
+  </div>
+  <div class="data-section">
+    <div class="data-section-title">Export</div>
+    <button class="data-btn" onclick="exportJSON()">
+      <span class="data-btn-icon">⬇️</span>
+      <div class="data-btn-info">
+        <div>Alles als JSON exportieren</div>
+        <div class="data-btn-sub">Gewohnheiten, Wochen, Gym-Sessions</div>
+      </div>
+    </button>
+
+    <div class="data-section-title">Import</div>
+    <div class="import-drop" onclick="document.getElementById(&#39;import-file&#39;).click()">
+      📂 JSON-Backup laden<br>
+      <span style="font-size:11px;margin-top:4px;display:block">Tippe hier oder wähle eine Datei</span>
+    </div>
+    <input type="file" id="import-file" accept=".json" style="display:none" onchange="importJSON(this)">
+
+    <div class="data-section-title" style="margin-top:24px">Speicher</div>
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;">
+      <div style="font-size:13px;color:var(--text2);margin-bottom:8px">Aktuell gespeicherte Daten:</div>
+      <div id="storage-info" style="font-size:12px;font-family:var(--mono);color:var(--text3);line-height:1.8">Gewohnheiten: 4<br>Gespeicherte Wochen: 3<br>Gym-Sessions: 0<br>Dateigröße: ~5.3 KB</div>
+    </div>
+
+    <button class="data-btn" style="margin-top:16px;border-color:rgba(248,113,113,.25)" onclick="resetAll()">
+      <span class="data-btn-icon">🗑️</span>
+      <div class="data-btn-info">
+        <div style="color:var(--danger)">Alle Daten zurücksetzen</div>
+        <div class="data-btn-sub">Nicht rückgängig machbar</div>
+      </div>
+    </button>
+  </div>
+</div>
+
+<!-- ══ SETTINGS VIEW ══ -->
+<div class="view active" id="view-settings">
+  <div class="settings-header">
+    <div class="settings-title">⚙️ Planen</div>
+    <button class="add-habit-btn" onclick="openNewHabit()">+ Neu</button>
+  </div>
+  <div class="settings-list" id="settings-list">
+    <div class="settings-card" id="sc-stretch">
+      <div class="settings-card-header" onclick="toggleCard(&#39;stretch&#39;)">
+        <div class="settings-color-dot" style="background:#a78bfa"></div>
+        <div class="settings-habit-name">Stretching</div>
+        <div class="settings-habit-days">Mo, Mi, Sa</div>
+        <div class="settings-chevron">›</div>
+      </div>
+      <div class="settings-body">
+    <div class="field-label" style="margin-top:0">Name</div>
+    <input class="text-input" value="Stretching" oninput="setHabitName(&#39;stretch&#39;,this.value)" placeholder="z.B. Stretching">
+
+    <div class="field-label">Farbe</div>
+    <div class="color-picker-row">
+      <div class="color-swatch selected" style="background:#a78bfa" onclick="setHabitColor(&#39;stretch&#39;,&#39;#a78bfa&#39;)"></div>
+      <div class="color-swatch" style="background:#34d399" onclick="setHabitColor(&#39;stretch&#39;,&#39;#34d399&#39;)"></div>
+      <div class="color-swatch" style="background:#fb923c" onclick="setHabitColor(&#39;stretch&#39;,&#39;#fb923c&#39;)"></div>
+      <div class="color-swatch" style="background:#60a5fa" onclick="setHabitColor(&#39;stretch&#39;,&#39;#60a5fa&#39;)"></div>
+      <div class="color-swatch" style="background:#f472b6" onclick="setHabitColor(&#39;stretch&#39;,&#39;#f472b6&#39;)"></div>
+      <div class="color-swatch" style="background:#facc15" onclick="setHabitColor(&#39;stretch&#39;,&#39;#facc15&#39;)"></div>
+      <div class="color-swatch" style="background:#f87171" onclick="setHabitColor(&#39;stretch&#39;,&#39;#f87171&#39;)"></div>
+      <div class="color-swatch" style="background:#2dd4bf" onclick="setHabitColor(&#39;stretch&#39;,&#39;#2dd4bf&#39;)"></div>
+      <div class="color-swatch" style="background:#818cf8" onclick="setHabitColor(&#39;stretch&#39;,&#39;#818cf8&#39;)"></div></div>
+
+    <div class="field-label">Standard-Wochentage</div>
+    <div class="day-checkboxes">
+      <button class="day-check-btn selected" onclick="toggleDay(&#39;stretch&#39;,0)">Mo</button>
+      <button class="day-check-btn" onclick="toggleDay(&#39;stretch&#39;,1)">Di</button>
+      <button class="day-check-btn selected" onclick="toggleDay(&#39;stretch&#39;,2)">Mi</button>
+      <button class="day-check-btn" onclick="toggleDay(&#39;stretch&#39;,3)">Do</button>
+      <button class="day-check-btn" onclick="toggleDay(&#39;stretch&#39;,4)">Fr</button>
+      <button class="day-check-btn selected" onclick="toggleDay(&#39;stretch&#39;,5)">Sa</button>
+      <button class="day-check-btn" onclick="toggleDay(&#39;stretch&#39;,6)">So</button></div>
+
+    <div class="field-label">Notfallpläne &amp; Videos
+      <span style="font-weight:400;color:var(--text3);font-size:10px;margin-left:4px;text-transform:none;letter-spacing:0">
+        — jeder Plan hat eigene Videos
+      </span>
+    </div>
+    <div id="pl-stretch">
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:11px;padding:11px 12px;margin-bottom:8px">
+      <div style="display:flex;gap:7px;align-items:center;margin-bottom:10px">
+        <div style="width:8px;height:8px;border-radius:50%;background:#a78bfa;flex-shrink:0"></div>
+        <input class="text-input" placeholder="Plan-Name (z.B. Kurze Version)" value="Volle Version" oninput="updPlanName(&#39;stretch&#39;,0,this.value)" style="flex:1">
+        <input class="text-input" placeholder="Min" value="20 min" oninput="updPlanDur(&#39;stretch&#39;,0,this.value)" style="width:64px;flex-shrink:0">
+        <button onclick="delPlan(&#39;stretch&#39;,0)" style="background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.25);border-radius:7px;
+          color:var(--danger);font-size:12px;padding:6px 9px;cursor:pointer;font-family:var(--font);flex-shrink:0">✕</button>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:7px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">
+        🎬 Videos für diesen Plan
+      </div>
+      <div id="pl-links-stretch-0" style="display:flex;flex-direction:column;gap:6px;margin-bottom:7px">
+        
+      </div>
+      <button class="add-link-btn" onclick="addPlanLink(&#39;stretch&#39;,0)">+ Video hinzufügen</button>
+    </div>
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:11px;padding:11px 12px;margin-bottom:8px">
+      <div style="display:flex;gap:7px;align-items:center;margin-bottom:10px">
+        <div style="width:8px;height:8px;border-radius:50%;background:#a78bfa;flex-shrink:0"></div>
+        <input class="text-input" placeholder="Plan-Name (z.B. Kurze Version)" value="Kurz am Morgen" oninput="updPlanName(&#39;stretch&#39;,1,this.value)" style="flex:1">
+        <input class="text-input" placeholder="Min" value="8 min" oninput="updPlanDur(&#39;stretch&#39;,1,this.value)" style="width:64px;flex-shrink:0">
+        <button onclick="delPlan(&#39;stretch&#39;,1)" style="background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.25);border-radius:7px;
+          color:var(--danger);font-size:12px;padding:6px 9px;cursor:pointer;font-family:var(--font);flex-shrink:0">✕</button>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:7px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">
+        🎬 Videos für diesen Plan
+      </div>
+      <div id="pl-links-stretch-1" style="display:flex;flex-direction:column;gap:6px;margin-bottom:7px">
+        <div id="plr-stretch-1-0" style="background:var(--bg4);border-radius:8px;padding:8px 10px">
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px">
+      <span style="font-size:11px;color:var(--text3)">Video 1</span>
+      <a href="https://www.youtube.com/watch?v=FI51zRzgIe4" target="_blank" rel="noopener" style="font-size:11px;color:#fb923c;text-decoration:none;margin-left:auto">▶ Test ↗</a>
+      <button onclick="delPlanLink(&#39;stretch&#39;,1,0)" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:12px;
+        padding:0 2px;">✕</button>
+    </div>
+    <input class="text-input" placeholder="Bezeichnung" value="8 min (engl) Beginner" oninput="updPlanLink(&#39;stretch&#39;,1,0,&#39;label&#39;,this.value)" style="margin-bottom:5px;font-size:12px;padding:6px 10px">
+    <input class="text-input" placeholder="https://youtube.com/watch?v=..." value="https://www.youtube.com/watch?v=FI51zRzgIe4" oninput="updPlanLink(&#39;stretch&#39;,1,0,&#39;url&#39;,this.value)" style="font-size:12px;padding:6px 10px">
+  </div><div id="plr-stretch-1-1" style="background:var(--bg4);border-radius:8px;padding:8px 10px">
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px">
+      <span style="font-size:11px;color:var(--text3)">Video 2</span>
+      <a href="https://www.youtube.com/watch?v=_MCPHzIRis0" target="_blank" rel="noopener" style="font-size:11px;color:#fb923c;text-decoration:none;margin-left:auto">▶ Test ↗</a>
+      <button onclick="delPlanLink(&#39;stretch&#39;,1,1)" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:12px;
+        padding:0 2px;">✕</button>
+    </div>
+    <input class="text-input" placeholder="Bezeichnung" value="Top 3 Beweglichkeitsvideos" oninput="updPlanLink(&#39;stretch&#39;,1,1,&#39;label&#39;,this.value)" style="margin-bottom:5px;font-size:12px;padding:6px 10px">
+    <input class="text-input" placeholder="https://youtube.com/watch?v=..." value="https://www.youtube.com/watch?v=_MCPHzIRis0" oninput="updPlanLink(&#39;stretch&#39;,1,1,&#39;url&#39;,this.value)" style="font-size:12px;padding:6px 10px">
+  </div>
+      </div>
+      <button class="add-link-btn" onclick="addPlanLink(&#39;stretch&#39;,1)">+ Video hinzufügen</button>
+    </div></div>
+    <button class="add-link-btn" onclick="addPlan(&#39;stretch&#39;)">+ Plan hinzufügen</button>
+
+    <button class="save-btn" style="width:100%;margin-top:16px" onclick="saveHabit(&#39;stretch&#39;)">✓ Speichern</button>
+    <button onclick="deleteHabit(&#39;stretch&#39;)" style="width:100%;margin-top:8px;background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.3);
+      border-radius:12px;padding:13px;font-size:14px;color:var(--danger);cursor:pointer;font-family:var(--font)">
+      🗑 Gewohnheit löschen
+    </button></div>
+    </div>
+    <div class="settings-card" id="sc-core">
+      <div class="settings-card-header" onclick="toggleCard(&#39;core&#39;)">
+        <div class="settings-color-dot" style="background:#34d399"></div>
+        <div class="settings-habit-name">Core-Training</div>
+        <div class="settings-habit-days">Di, Do</div>
+        <div class="settings-chevron">›</div>
+      </div>
+      <div class="settings-body">
+    <div class="field-label" style="margin-top:0">Name</div>
+    <input class="text-input" value="Core-Training" oninput="setHabitName(&#39;core&#39;,this.value)" placeholder="z.B. Stretching">
+
+    <div class="field-label">Farbe</div>
+    <div class="color-picker-row">
+      <div class="color-swatch" style="background:#a78bfa" onclick="setHabitColor(&#39;core&#39;,&#39;#a78bfa&#39;)"></div>
+      <div class="color-swatch selected" style="background:#34d399" onclick="setHabitColor(&#39;core&#39;,&#39;#34d399&#39;)"></div>
+      <div class="color-swatch" style="background:#fb923c" onclick="setHabitColor(&#39;core&#39;,&#39;#fb923c&#39;)"></div>
+      <div class="color-swatch" style="background:#60a5fa" onclick="setHabitColor(&#39;core&#39;,&#39;#60a5fa&#39;)"></div>
+      <div class="color-swatch" style="background:#f472b6" onclick="setHabitColor(&#39;core&#39;,&#39;#f472b6&#39;)"></div>
+      <div class="color-swatch" style="background:#facc15" onclick="setHabitColor(&#39;core&#39;,&#39;#facc15&#39;)"></div>
+      <div class="color-swatch" style="background:#f87171" onclick="setHabitColor(&#39;core&#39;,&#39;#f87171&#39;)"></div>
+      <div class="color-swatch" style="background:#2dd4bf" onclick="setHabitColor(&#39;core&#39;,&#39;#2dd4bf&#39;)"></div>
+      <div class="color-swatch" style="background:#818cf8" onclick="setHabitColor(&#39;core&#39;,&#39;#818cf8&#39;)"></div></div>
+
+    <div class="field-label">Standard-Wochentage</div>
+    <div class="day-checkboxes">
+      <button class="day-check-btn" onclick="toggleDay(&#39;core&#39;,0)">Mo</button>
+      <button class="day-check-btn selected" onclick="toggleDay(&#39;core&#39;,1)">Di</button>
+      <button class="day-check-btn" onclick="toggleDay(&#39;core&#39;,2)">Mi</button>
+      <button class="day-check-btn selected" onclick="toggleDay(&#39;core&#39;,3)">Do</button>
+      <button class="day-check-btn" onclick="toggleDay(&#39;core&#39;,4)">Fr</button>
+      <button class="day-check-btn" onclick="toggleDay(&#39;core&#39;,5)">Sa</button>
+      <button class="day-check-btn" onclick="toggleDay(&#39;core&#39;,6)">So</button></div>
+
+    <div class="field-label">Notfallpläne &amp; Videos
+      <span style="font-weight:400;color:var(--text3);font-size:10px;margin-left:4px;text-transform:none;letter-spacing:0">
+        — jeder Plan hat eigene Videos
+      </span>
+    </div>
+    <div id="pl-core">
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:11px;padding:11px 12px;margin-bottom:8px">
+      <div style="display:flex;gap:7px;align-items:center;margin-bottom:10px">
+        <div style="width:8px;height:8px;border-radius:50%;background:#34d399;flex-shrink:0"></div>
+        <input class="text-input" placeholder="Plan-Name (z.B. Kurze Version)" value="Volle Version" oninput="updPlanName(&#39;core&#39;,0,this.value)" style="flex:1">
+        <input class="text-input" placeholder="Min" value="15 min" oninput="updPlanDur(&#39;core&#39;,0,this.value)" style="width:64px;flex-shrink:0">
+        <button onclick="delPlan(&#39;core&#39;,0)" style="background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.25);border-radius:7px;
+          color:var(--danger);font-size:12px;padding:6px 9px;cursor:pointer;font-family:var(--font);flex-shrink:0">✕</button>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:7px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">
+        🎬 Videos für diesen Plan
+      </div>
+      <div id="pl-links-core-0" style="display:flex;flex-direction:column;gap:6px;margin-bottom:7px">
+        
+      </div>
+      <button class="add-link-btn" onclick="addPlanLink(&#39;core&#39;,0)">+ Video hinzufügen</button>
+    </div>
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:11px;padding:11px 12px;margin-bottom:8px">
+      <div style="display:flex;gap:7px;align-items:center;margin-bottom:10px">
+        <div style="width:8px;height:8px;border-radius:50%;background:#34d399;flex-shrink:0"></div>
+        <input class="text-input" placeholder="Plan-Name (z.B. Kurze Version)" value="Kurz am Morgen" oninput="updPlanName(&#39;core&#39;,1,this.value)" style="flex:1">
+        <input class="text-input" placeholder="Min" value="7 min" oninput="updPlanDur(&#39;core&#39;,1,this.value)" style="width:64px;flex-shrink:0">
+        <button onclick="delPlan(&#39;core&#39;,1)" style="background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.25);border-radius:7px;
+          color:var(--danger);font-size:12px;padding:6px 9px;cursor:pointer;font-family:var(--font);flex-shrink:0">✕</button>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:7px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">
+        🎬 Videos für diesen Plan
+      </div>
+      <div id="pl-links-core-1" style="display:flex;flex-direction:column;gap:6px;margin-bottom:7px">
+        <div id="plr-core-1-0" style="background:var(--bg4);border-radius:8px;padding:8px 10px">
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px">
+      <span style="font-size:11px;color:var(--text3)">Video 1</span>
+      <a href="https://www.youtube.com/watch?v=ztfX0vFOD0E" target="_blank" rel="noopener" style="font-size:11px;color:#fb923c;text-decoration:none;margin-left:auto">▶ Test ↗</a>
+      <button onclick="delPlanLink(&#39;core&#39;,1,0)" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:12px;
+        padding:0 2px;">✕</button>
+    </div>
+    <input class="text-input" placeholder="Bezeichnung" value="7 Min Military Workout" oninput="updPlanLink(&#39;core&#39;,1,0,&#39;label&#39;,this.value)" style="margin-bottom:5px;font-size:12px;padding:6px 10px">
+    <input class="text-input" placeholder="https://youtube.com/watch?v=..." value="https://www.youtube.com/watch?v=ztfX0vFOD0E" oninput="updPlanLink(&#39;core&#39;,1,0,&#39;url&#39;,this.value)" style="font-size:12px;padding:6px 10px">
+  </div>
+      </div>
+      <button class="add-link-btn" onclick="addPlanLink(&#39;core&#39;,1)">+ Video hinzufügen</button>
+    </div></div>
+    <button class="add-link-btn" onclick="addPlan(&#39;core&#39;)">+ Plan hinzufügen</button>
+
+    <button class="save-btn" style="width:100%;margin-top:16px" onclick="saveHabit(&#39;core&#39;)">✓ Speichern</button>
+    <button onclick="deleteHabit(&#39;core&#39;)" style="width:100%;margin-top:8px;background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.3);
+      border-radius:12px;padding:13px;font-size:14px;color:var(--danger);cursor:pointer;font-family:var(--font)">
+      🗑 Gewohnheit löschen
+    </button></div>
+    </div>
+    <div class="settings-card" id="sc-home">
+      <div class="settings-card-header" onclick="toggleCard(&#39;home&#39;)">
+        <div class="settings-color-dot" style="background:#2dd4bf"></div>
+        <div class="settings-habit-name">Home</div>
+        <div class="settings-habit-days">Di, Do, Sa</div>
+        <div class="settings-chevron">›</div>
+      </div>
+      <div class="settings-body">
+    <div class="field-label" style="margin-top:0">Name</div>
+    <input class="text-input" value="Home" oninput="setHabitName(&#39;home&#39;,this.value)" placeholder="z.B. Stretching">
+
+    <div class="field-label">Farbe</div>
+    <div class="color-picker-row">
+      <div class="color-swatch" style="background:#a78bfa" onclick="setHabitColor(&#39;home&#39;,&#39;#a78bfa&#39;)"></div>
+      <div class="color-swatch" style="background:#34d399" onclick="setHabitColor(&#39;home&#39;,&#39;#34d399&#39;)"></div>
+      <div class="color-swatch" style="background:#fb923c" onclick="setHabitColor(&#39;home&#39;,&#39;#fb923c&#39;)"></div>
+      <div class="color-swatch" style="background:#60a5fa" onclick="setHabitColor(&#39;home&#39;,&#39;#60a5fa&#39;)"></div>
+      <div class="color-swatch" style="background:#f472b6" onclick="setHabitColor(&#39;home&#39;,&#39;#f472b6&#39;)"></div>
+      <div class="color-swatch" style="background:#facc15" onclick="setHabitColor(&#39;home&#39;,&#39;#facc15&#39;)"></div>
+      <div class="color-swatch" style="background:#f87171" onclick="setHabitColor(&#39;home&#39;,&#39;#f87171&#39;)"></div>
+      <div class="color-swatch selected" style="background:#2dd4bf" onclick="setHabitColor(&#39;home&#39;,&#39;#2dd4bf&#39;)"></div>
+      <div class="color-swatch" style="background:#818cf8" onclick="setHabitColor(&#39;home&#39;,&#39;#818cf8&#39;)"></div></div>
+
+    <div class="field-label">Standard-Wochentage</div>
+    <div class="day-checkboxes">
+      <button class="day-check-btn" onclick="toggleDay(&#39;home&#39;,0)">Mo</button>
+      <button class="day-check-btn selected" onclick="toggleDay(&#39;home&#39;,1)">Di</button>
+      <button class="day-check-btn" onclick="toggleDay(&#39;home&#39;,2)">Mi</button>
+      <button class="day-check-btn selected" onclick="toggleDay(&#39;home&#39;,3)">Do</button>
+      <button class="day-check-btn" onclick="toggleDay(&#39;home&#39;,4)">Fr</button>
+      <button class="day-check-btn selected" onclick="toggleDay(&#39;home&#39;,5)">Sa</button>
+      <button class="day-check-btn" onclick="toggleDay(&#39;home&#39;,6)">So</button></div>
+
+    <div class="field-label">Notfallpläne &amp; Videos
+      <span style="font-weight:400;color:var(--text3);font-size:10px;margin-left:4px;text-transform:none;letter-spacing:0">
+        — jeder Plan hat eigene Videos
+      </span>
+    </div>
+    <div id="pl-home">
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:11px;padding:11px 12px;margin-bottom:8px">
+      <div style="display:flex;gap:7px;align-items:center;margin-bottom:10px">
+        <div style="width:8px;height:8px;border-radius:50%;background:#2dd4bf;flex-shrink:0"></div>
+        <input class="text-input" placeholder="Plan-Name (z.B. Kurze Version)" value="Abs – 7 min" oninput="updPlanName(&#39;home&#39;,0,this.value)" style="flex:1">
+        <input class="text-input" placeholder="Min" value="7 min" oninput="updPlanDur(&#39;home&#39;,0,this.value)" style="width:64px;flex-shrink:0">
+        <button onclick="delPlan(&#39;home&#39;,0)" style="background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.25);border-radius:7px;
+          color:var(--danger);font-size:12px;padding:6px 9px;cursor:pointer;font-family:var(--font);flex-shrink:0">✕</button>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:7px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">
+        🎬 Videos für diesen Plan
+      </div>
+      <div id="pl-links-home-0" style="display:flex;flex-direction:column;gap:6px;margin-bottom:7px">
+        
+      </div>
+      <button class="add-link-btn" onclick="addPlanLink(&#39;home&#39;,0)">+ Video hinzufügen</button>
+    </div>
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:11px;padding:11px 12px;margin-bottom:8px">
+      <div style="display:flex;gap:7px;align-items:center;margin-bottom:10px">
+        <div style="width:8px;height:8px;border-radius:50%;background:#2dd4bf;flex-shrink:0"></div>
+        <input class="text-input" placeholder="Plan-Name (z.B. Kurze Version)" value="Nur Stretching" oninput="updPlanName(&#39;home&#39;,1,this.value)" style="flex:1">
+        <input class="text-input" placeholder="Min" value="8 min" oninput="updPlanDur(&#39;home&#39;,1,this.value)" style="width:64px;flex-shrink:0">
+        <button onclick="delPlan(&#39;home&#39;,1)" style="background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.25);border-radius:7px;
+          color:var(--danger);font-size:12px;padding:6px 9px;cursor:pointer;font-family:var(--font);flex-shrink:0">✕</button>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:7px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">
+        🎬 Videos für diesen Plan
+      </div>
+      <div id="pl-links-home-1" style="display:flex;flex-direction:column;gap:6px;margin-bottom:7px">
+        
+      </div>
+      <button class="add-link-btn" onclick="addPlanLink(&#39;home&#39;,1)">+ Video hinzufügen</button>
+    </div></div>
+    <button class="add-link-btn" onclick="addPlan(&#39;home&#39;)">+ Plan hinzufügen</button>
+
+    <button class="save-btn" style="width:100%;margin-top:16px" onclick="saveHabit(&#39;home&#39;)">✓ Speichern</button>
+    <button onclick="deleteHabit(&#39;home&#39;)" style="width:100%;margin-top:8px;background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.3);
+      border-radius:12px;padding:13px;font-size:14px;color:var(--danger);cursor:pointer;font-family:var(--font)">
+      🗑 Gewohnheit löschen
+    </button></div>
+    </div>
+    <div class="settings-card expanded" id="sc-gym">
+      <div class="settings-card-header" onclick="toggleCard(&#39;gym&#39;)">
+        <div class="settings-color-dot" style="background:#fb923c"></div>
+        <div class="settings-habit-name">Gym</div>
+        <div class="settings-habit-days">Mo, Sa</div>
+        <div class="settings-chevron">›</div>
+      </div>
+      <div class="settings-body">
+    <div class="field-label" style="margin-top:0">Name</div>
+    <input class="text-input" value="Gym" oninput="setHabitName(&#39;gym&#39;,this.value)" placeholder="z.B. Stretching">
+
+    <div class="field-label">Farbe</div>
+    <div class="color-picker-row">
+      <div class="color-swatch" style="background:#a78bfa" onclick="setHabitColor(&#39;gym&#39;,&#39;#a78bfa&#39;)"></div>
+      <div class="color-swatch" style="background:#34d399" onclick="setHabitColor(&#39;gym&#39;,&#39;#34d399&#39;)"></div>
+      <div class="color-swatch selected" style="background:#fb923c" onclick="setHabitColor(&#39;gym&#39;,&#39;#fb923c&#39;)"></div>
+      <div class="color-swatch" style="background:#60a5fa" onclick="setHabitColor(&#39;gym&#39;,&#39;#60a5fa&#39;)"></div>
+      <div class="color-swatch" style="background:#f472b6" onclick="setHabitColor(&#39;gym&#39;,&#39;#f472b6&#39;)"></div>
+      <div class="color-swatch" style="background:#facc15" onclick="setHabitColor(&#39;gym&#39;,&#39;#facc15&#39;)"></div>
+      <div class="color-swatch" style="background:#f87171" onclick="setHabitColor(&#39;gym&#39;,&#39;#f87171&#39;)"></div>
+      <div class="color-swatch" style="background:#2dd4bf" onclick="setHabitColor(&#39;gym&#39;,&#39;#2dd4bf&#39;)"></div>
+      <div class="color-swatch" style="background:#818cf8" onclick="setHabitColor(&#39;gym&#39;,&#39;#818cf8&#39;)"></div></div>
+
+    <div class="field-label">Standard-Wochentage</div>
+    <div class="day-checkboxes">
+      <button class="day-check-btn selected" onclick="toggleDay(&#39;gym&#39;,0)">Mo</button>
+      <button class="day-check-btn" onclick="toggleDay(&#39;gym&#39;,1)">Di</button>
+      <button class="day-check-btn" onclick="toggleDay(&#39;gym&#39;,2)">Mi</button>
+      <button class="day-check-btn" onclick="toggleDay(&#39;gym&#39;,3)">Do</button>
+      <button class="day-check-btn" onclick="toggleDay(&#39;gym&#39;,4)">Fr</button>
+      <button class="day-check-btn selected" onclick="toggleDay(&#39;gym&#39;,5)">Sa</button>
+      <button class="day-check-btn" onclick="toggleDay(&#39;gym&#39;,6)">So</button></div>
+
+    <div class="field-label">Notfallpläne &amp; Videos
+      <span style="font-weight:400;color:var(--text3);font-size:10px;margin-left:4px;text-transform:none;letter-spacing:0">
+        — jeder Plan hat eigene Videos
+      </span>
+    </div>
+    <div id="pl-gym">
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:11px;padding:11px 12px;margin-bottom:8px">
+      <div style="display:flex;gap:7px;align-items:center;margin-bottom:10px">
+        <div style="width:8px;height:8px;border-radius:50%;background:#fb923c;flex-shrink:0"></div>
+        <input class="text-input" placeholder="Plan-Name (z.B. Kurze Version)" value="Volle Session" oninput="updPlanName(&#39;gym&#39;,0,this.value)" style="flex:1">
+        <input class="text-input" placeholder="Min" value="75 min" oninput="updPlanDur(&#39;gym&#39;,0,this.value)" style="width:64px;flex-shrink:0">
+        <button onclick="delPlan(&#39;gym&#39;,0)" style="background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.25);border-radius:7px;
+          color:var(--danger);font-size:12px;padding:6px 9px;cursor:pointer;font-family:var(--font);flex-shrink:0">✕</button>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:7px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">
+        🎬 Videos für diesen Plan
+      </div>
+      <div id="pl-links-gym-0" style="display:flex;flex-direction:column;gap:6px;margin-bottom:7px"><div id="plr-gym-0-0" style="background:var(--bg4);border-radius:8px;padding:8px 10px">
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px">
+      <span style="font-size:11px;color:var(--text3)">Video 1</span>
+      
+      <button onclick="delPlanLink(&#39;gym&#39;,0,0)" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:12px;
+        padding:0 2px;margin-left:auto">✕</button>
+    </div>
+    <input class="text-input" placeholder="Bezeichnung" value="" oninput="updPlanLink(&#39;gym&#39;,0,0,&#39;label&#39;,this.value)" style="margin-bottom:5px;font-size:12px;padding:6px 10px">
+    <input class="text-input" placeholder="https://youtube.com/watch?v=..." value="" oninput="updPlanLink(&#39;gym&#39;,0,0,&#39;url&#39;,this.value)" style="font-size:12px;padding:6px 10px">
+  </div></div>
+      <button class="add-link-btn" onclick="addPlanLink(&#39;gym&#39;,0)">+ Video hinzufügen</button>
+    </div>
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:11px;padding:11px 12px;margin-bottom:8px">
+      <div style="display:flex;gap:7px;align-items:center;margin-bottom:10px">
+        <div style="width:8px;height:8px;border-radius:50%;background:#fb923c;flex-shrink:0"></div>
+        <input class="text-input" placeholder="Plan-Name (z.B. Kurze Version)" value="Kompakt" oninput="updPlanName(&#39;gym&#39;,1,this.value)" style="flex:1">
+        <input class="text-input" placeholder="Min" value="45 min" oninput="updPlanDur(&#39;gym&#39;,1,this.value)" style="width:64px;flex-shrink:0">
+        <button onclick="delPlan(&#39;gym&#39;,1)" style="background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.25);border-radius:7px;
+          color:var(--danger);font-size:12px;padding:6px 9px;cursor:pointer;font-family:var(--font);flex-shrink:0">✕</button>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:7px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">
+        🎬 Videos für diesen Plan
+      </div>
+      <div id="pl-links-gym-1" style="display:flex;flex-direction:column;gap:6px;margin-bottom:7px">
+        
+      <div id="plr-gym-1-0" style="background:var(--bg4);border-radius:8px;padding:8px 10px">
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px">
+      <span style="font-size:11px;color:var(--text3)">Video 1</span>
+      
+      <button onclick="delPlanLink(&#39;gym&#39;,1,0)" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:12px;
+        padding:0 2px;margin-left:auto">✕</button>
+    </div>
+    <input class="text-input" placeholder="Bezeichnung" value="" oninput="updPlanLink(&#39;gym&#39;,1,0,&#39;label&#39;,this.value)" style="margin-bottom:5px;font-size:12px;padding:6px 10px">
+    <input class="text-input" placeholder="https://youtube.com/watch?v=..." value="" oninput="updPlanLink(&#39;gym&#39;,1,0,&#39;url&#39;,this.value)" style="font-size:12px;padding:6px 10px">
+  </div></div>
+      <button class="add-link-btn" onclick="addPlanLink(&#39;gym&#39;,1)">+ Video hinzufügen</button>
+    </div></div>
+    <button class="add-link-btn" onclick="addPlan(&#39;gym&#39;)">+ Plan hinzufügen</button>
+
+    <button class="save-btn" style="width:100%;margin-top:16px" onclick="saveHabit(&#39;gym&#39;)">✓ Speichern</button>
+    <button onclick="deleteHabit(&#39;gym&#39;)" style="width:100%;margin-top:8px;background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.3);
+      border-radius:12px;padding:13px;font-size:14px;color:var(--danger);cursor:pointer;font-family:var(--font)">
+      🗑 Gewohnheit löschen
+    </button></div>
+    </div><div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin:20px 0 10px">
+       🏋️ Workout-Vorlagen
+     </div><div class="gym-tmpl-card" id="gtc-0">
+      <div class="gym-tmpl-head" onclick="toggleGymTmpl(0)">
+        <div class="gym-tmpl-dot" style="background:#fb923c"></div>
+        <div class="gym-tmpl-name">Workout A – Full Body</div>
+        <div class="gym-tmpl-meta">0 Sessions · W1 · Session 1/2</div>
+        <div class="gym-tmpl-chev">›</div>
+      </div>
+      <div class="gym-tmpl-body" id="gtb-0"><div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+    <div class="prog-badge">📈 W1 · Session 1/2</div>
+    <span style="font-size:11px;color:var(--text3)">0 Sessions abgeschlossen</span>
+  </div><div class="ex-edit-block" id="gte-0-0">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+        <input class="ex-edit-name" value="Dumbbell Bench Press" placeholder="Übungsname" oninput="updTmplExName(0,0,this.value)">
+        <button class="ex-edit-del" onclick="delTmplEx(0,0)">✕</button>
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Muskeln</span>
+        <input class="ex-edit-input" value="Chest · Front Delts · Triceps" placeholder="z.B. Chest · Triceps" oninput="updTmplExField(0,0,&#39;muscles&#39;,this.value)">
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Wdh-Ziel</span>
+        <input class="ex-edit-input" value="8–10 (W1) → 11–13 (W2)" placeholder="z.B. 8–10 (W1) → 11–13 (W2)" oninput="updTmplExField(0,0,&#39;repRange&#39;,this.value)">
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Sätze</span>
+        <input class="ex-edit-input" type="number" min="1" max="10" value="2" style="flex:0 0 60px" oninput="updTmplExField(0,0,&#39;defaultSets&#39;,parseInt(this.value)||2)">
+        <span style="font-size:11px;color:var(--text3);margin-left:4px">Voreinstellung</span>
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Notiz</span>
+        <input class="ex-edit-input" value="Kontrollierte Negative, keine Ellbogen hyperextended" placeholder="Technik-Hinweis" oninput="updTmplExField(0,0,&#39;notes&#39;,this.value)">
+      </div>
+      <div style="margin-top:6px;font-size:11px;color:var(--accent);font-family:var(--mono)">
+        → Aktuelles Ziel: 8–10 Wdh
+      </div>
+    </div><div class="ex-edit-block" id="gte-0-1">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+        <input class="ex-edit-name" value="Chest-Supported T-Bar Row" placeholder="Übungsname" oninput="updTmplExName(0,1,this.value)">
+        <button class="ex-edit-del" onclick="delTmplEx(0,1)">✕</button>
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Muskeln</span>
+        <input class="ex-edit-input" value="Lats · Rear Delts · Upper Back · Biceps" placeholder="z.B. Chest · Triceps" oninput="updTmplExField(0,1,&#39;muscles&#39;,this.value)">
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Wdh-Ziel</span>
+        <input class="ex-edit-input" value="7+ (W1) → 10–12 (W2)" placeholder="z.B. 8–10 (W1) → 11–13 (W2)" oninput="updTmplExField(0,1,&#39;repRange&#39;,this.value)">
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Sätze</span>
+        <input class="ex-edit-input" type="number" min="1" max="10" value="2" style="flex:0 0 60px" oninput="updTmplExField(0,1,&#39;defaultSets&#39;,parseInt(this.value)||2)">
+        <span style="font-size:11px;color:var(--text3);margin-left:4px">Voreinstellung</span>
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Notiz</span>
+        <input class="ex-edit-input" value="Brust liegt auf der Pad – kein Schwung" placeholder="Technik-Hinweis" oninput="updTmplExField(0,1,&#39;notes&#39;,this.value)">
+      </div>
+      <div style="margin-top:6px;font-size:11px;color:var(--accent);font-family:var(--mono)">
+        → Aktuelles Ziel: 10–12 Wdh
+      </div>
+    </div><div class="ex-edit-block" id="gte-0-2">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+        <input class="ex-edit-name" value="Plate-Loaded Leg Press" placeholder="Übungsname" oninput="updTmplExName(0,2,this.value)">
+        <button class="ex-edit-del" onclick="delTmplEx(0,2)">✕</button>
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Muskeln</span>
+        <input class="ex-edit-input" value="Adductors · Glutes · Quads" placeholder="z.B. Chest · Triceps" oninput="updTmplExField(0,2,&#39;muscles&#39;,this.value)">
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Wdh-Ziel</span>
+        <input class="ex-edit-input" value="8–10 (W1) → 11–13 (W2)" placeholder="z.B. 8–10 (W1) → 11–13 (W2)" oninput="updTmplExField(0,2,&#39;repRange&#39;,this.value)">
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Sätze</span>
+        <input class="ex-edit-input" type="number" min="1" max="10" value="2" style="flex:0 0 60px" oninput="updTmplExField(0,2,&#39;defaultSets&#39;,parseInt(this.value)||2)">
+        <span style="font-size:11px;color:var(--text3);margin-left:4px">Voreinstellung</span>
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Notiz</span>
+        <input class="ex-edit-input" value="Füße schulterbreit, tief gehen ohne Becken kippen" placeholder="Technik-Hinweis" oninput="updTmplExField(0,2,&#39;notes&#39;,this.value)">
+      </div>
+      <div style="margin-top:6px;font-size:11px;color:var(--accent);font-family:var(--mono)">
+        → Aktuelles Ziel: 8–10 Wdh
+      </div>
+    </div><div class="ex-edit-block" id="gte-0-3">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+        <input class="ex-edit-name" value="Dumbbell Fly" placeholder="Übungsname" oninput="updTmplExName(0,3,this.value)">
+        <button class="ex-edit-del" onclick="delTmplEx(0,3)">✕</button>
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Muskeln</span>
+        <input class="ex-edit-input" value="Chest · Front Delts" placeholder="z.B. Chest · Triceps" oninput="updTmplExField(0,3,&#39;muscles&#39;,this.value)">
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Wdh-Ziel</span>
+        <input class="ex-edit-input" value="9+ (W1) → 11–13 (W2)" placeholder="z.B. 8–10 (W1) → 11–13 (W2)" oninput="updTmplExField(0,3,&#39;repRange&#39;,this.value)">
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Sätze</span>
+        <input class="ex-edit-input" type="number" min="1" max="10" value="2" style="flex:0 0 60px" oninput="updTmplExField(0,3,&#39;defaultSets&#39;,parseInt(this.value)||2)">
+        <span style="font-size:11px;color:var(--text3);margin-left:4px">Voreinstellung</span>
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Notiz</span>
+        <input class="ex-edit-input" value="Leichte Beugung im Ellbogen, Stretch unten spüren" placeholder="Technik-Hinweis" oninput="updTmplExField(0,3,&#39;notes&#39;,this.value)">
+      </div>
+      <div style="margin-top:6px;font-size:11px;color:var(--accent);font-family:var(--mono)">
+        → Aktuelles Ziel: 11–13 Wdh
+      </div>
+    </div><div class="ex-edit-block" id="gte-0-4">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+        <input class="ex-edit-name" value="Seated Dumbbell Lateral Raise" placeholder="Übungsname" oninput="updTmplExName(0,4,this.value)">
+        <button class="ex-edit-del" onclick="delTmplEx(0,4)">✕</button>
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Muskeln</span>
+        <input class="ex-edit-input" value="Side Delts · Front Delts · Upper Traps" placeholder="z.B. Chest · Triceps" oninput="updTmplExField(0,4,&#39;muscles&#39;,this.value)">
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Wdh-Ziel</span>
+        <input class="ex-edit-input" value="9+ (W1) → 11–13 (W2)" placeholder="z.B. 8–10 (W1) → 11–13 (W2)" oninput="updTmplExField(0,4,&#39;repRange&#39;,this.value)">
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Sätze</span>
+        <input class="ex-edit-input" type="number" min="1" max="10" value="2" style="flex:0 0 60px" oninput="updTmplExField(0,4,&#39;defaultSets&#39;,parseInt(this.value)||2)">
+        <span style="font-size:11px;color:var(--text3);margin-left:4px">Voreinstellung</span>
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Notiz</span>
+        <input class="ex-edit-input" value="Pinky leicht höher als Daumen, kein Schwung" placeholder="Technik-Hinweis" oninput="updTmplExField(0,4,&#39;notes&#39;,this.value)">
+      </div>
+      <div style="margin-top:6px;font-size:11px;color:var(--accent);font-family:var(--mono)">
+        → Aktuelles Ziel: 11–13 Wdh
+      </div>
+    </div><div class="ex-edit-block" id="gte-0-5">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+        <input class="ex-edit-name" value="Seated DB Finger Flexion Wrist Curl" placeholder="Übungsname" oninput="updTmplExName(0,5,this.value)">
+        <button class="ex-edit-del" onclick="delTmplEx(0,5)">✕</button>
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Muskeln</span>
+        <input class="ex-edit-input" value="Forearms" placeholder="z.B. Chest · Triceps" oninput="updTmplExField(0,5,&#39;muscles&#39;,this.value)">
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Wdh-Ziel</span>
+        <input class="ex-edit-input" value="9+ (W1) → 11–13 (W2)" placeholder="z.B. 8–10 (W1) → 11–13 (W2)" oninput="updTmplExField(0,5,&#39;repRange&#39;,this.value)">
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Sätze</span>
+        <input class="ex-edit-input" type="number" min="1" max="10" value="2" style="flex:0 0 60px" oninput="updTmplExField(0,5,&#39;defaultSets&#39;,parseInt(this.value)||2)">
+        <span style="font-size:11px;color:var(--text3);margin-left:4px">Voreinstellung</span>
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Notiz</span>
+        <input class="ex-edit-input" value="Langsam, volle Bewegung, leichtes Gewicht reicht" placeholder="Technik-Hinweis" oninput="updTmplExField(0,5,&#39;notes&#39;,this.value)">
+      </div>
+      <div style="margin-top:6px;font-size:11px;color:var(--accent);font-family:var(--mono)">
+        → Aktuelles Ziel: 11–13 Wdh
+      </div>
+    </div><div class="ex-edit-block" id="gte-0-6">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+        <input class="ex-edit-name" value="Incline Dumbbell Biceps Curl" placeholder="Übungsname" oninput="updTmplExName(0,6,this.value)">
+        <button class="ex-edit-del" onclick="delTmplEx(0,6)">✕</button>
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Muskeln</span>
+        <input class="ex-edit-input" value="Biceps" placeholder="z.B. Chest · Triceps" oninput="updTmplExField(0,6,&#39;muscles&#39;,this.value)">
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Wdh-Ziel</span>
+        <input class="ex-edit-input" value="9+ (W1) → 11–13 (W2)" placeholder="z.B. 8–10 (W1) → 11–13 (W2)" oninput="updTmplExField(0,6,&#39;repRange&#39;,this.value)">
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Sätze</span>
+        <input class="ex-edit-input" type="number" min="1" max="10" value="2" style="flex:0 0 60px" oninput="updTmplExField(0,6,&#39;defaultSets&#39;,parseInt(this.value)||2)">
+        <span style="font-size:11px;color:var(--text3);margin-left:4px">Voreinstellung</span>
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Notiz</span>
+        <input class="ex-edit-input" value="Bank auf 45°, Oberarm bleibt hinten – kein Schwung" placeholder="Technik-Hinweis" oninput="updTmplExField(0,6,&#39;notes&#39;,this.value)">
+      </div>
+      <div style="margin-top:6px;font-size:11px;color:var(--accent);font-family:var(--mono)">
+        → Aktuelles Ziel: 11–13 Wdh
+      </div>
+    </div><div class="ex-edit-block" id="gte-0-7">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+        <input class="ex-edit-name" value="Kneeling Cable Crunch" placeholder="Übungsname" oninput="updTmplExName(0,7,this.value)">
+        <button class="ex-edit-del" onclick="delTmplEx(0,7)">✕</button>
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Muskeln</span>
+        <input class="ex-edit-input" value="Abs · Obliques" placeholder="z.B. Chest · Triceps" oninput="updTmplExField(0,7,&#39;muscles&#39;,this.value)">
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Wdh-Ziel</span>
+        <input class="ex-edit-input" value="9+ (W1) → 11–13 (W2)" placeholder="z.B. 8–10 (W1) → 11–13 (W2)" oninput="updTmplExField(0,7,&#39;repRange&#39;,this.value)">
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Sätze</span>
+        <input class="ex-edit-input" type="number" min="1" max="10" value="2" style="flex:0 0 60px" oninput="updTmplExField(0,7,&#39;defaultSets&#39;,parseInt(this.value)||2)">
+        <span style="font-size:11px;color:var(--text3);margin-left:4px">Voreinstellung</span>
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Notiz</span>
+        <input class="ex-edit-input" value="Ellbogen zu den Knien, Crunch aus dem Bauch" placeholder="Technik-Hinweis" oninput="updTmplExField(0,7,&#39;notes&#39;,this.value)">
+      </div>
+      <div style="margin-top:6px;font-size:11px;color:var(--accent);font-family:var(--mono)">
+        → Aktuelles Ziel: 11–13 Wdh
+      </div>
+    </div><button class="add-link-btn" style="margin-top:4px" onclick="addTmplEx(0)">+ Übung hinzufügen</button>
+     <button class="save-btn" style="width:100%;margin-top:12px" onclick="saveTmpl(0)">✓ Vorlage speichern</button></div>
+    </div><div class="gym-tmpl-card" id="gtc-1">
+      <div class="gym-tmpl-head" onclick="toggleGymTmpl(1)">
+        <div class="gym-tmpl-dot" style="background:#a78bfa"></div>
+        <div class="gym-tmpl-name">Workout B – Full Body</div>
+        <div class="gym-tmpl-meta">0 Sessions · W1 · Session 1/2</div>
+        <div class="gym-tmpl-chev">›</div>
+      </div>
+      <div class="gym-tmpl-body" id="gtb-1"><div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+    <div class="prog-badge">📈 W1 · Session 1/2</div>
+    <span style="font-size:11px;color:var(--text3)">0 Sessions abgeschlossen</span>
+  </div><div class="ex-edit-block" id="gte-1-0">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+        <input class="ex-edit-name" value="Seated Dumbbell Overhead Press" placeholder="Übungsname" oninput="updTmplExName(1,0,this.value)">
+        <button class="ex-edit-del" onclick="delTmplEx(1,0)">✕</button>
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Muskeln</span>
+        <input class="ex-edit-input" value="Front Delts · Serratus · Side Delts" placeholder="z.B. Chest · Triceps" oninput="updTmplExField(1,0,&#39;muscles&#39;,this.value)">
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Wdh-Ziel</span>
+        <input class="ex-edit-input" value="8–10 (W1) → 11–13 (W2)" placeholder="z.B. 8–10 (W1) → 11–13 (W2)" oninput="updTmplExField(1,0,&#39;repRange&#39;,this.value)">
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Sätze</span>
+        <input class="ex-edit-input" type="number" min="1" max="10" value="2" style="flex:0 0 60px" oninput="updTmplExField(1,0,&#39;defaultSets&#39;,parseInt(this.value)||2)">
+        <span style="font-size:11px;color:var(--text3);margin-left:4px">Voreinstellung</span>
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Notiz</span>
+        <input class="ex-edit-input" value="Sitzen aufrecht, keine Hohlkreuz-Kompensation" placeholder="Technik-Hinweis" oninput="updTmplExField(1,0,&#39;notes&#39;,this.value)">
+      </div>
+      <div style="margin-top:6px;font-size:11px;color:var(--accent);font-family:var(--mono)">
+        → Aktuelles Ziel: 8–10 Wdh
+      </div>
+    </div><div class="ex-edit-block" id="gte-1-1">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+        <input class="ex-edit-name" value="Weighted Chin-Up" placeholder="Übungsname" oninput="updTmplExName(1,1,this.value)">
+        <button class="ex-edit-del" onclick="delTmplEx(1,1)">✕</button>
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Muskeln</span>
+        <input class="ex-edit-input" value="Biceps · Lats · Forearms · Rear Delts" placeholder="z.B. Chest · Triceps" oninput="updTmplExField(1,1,&#39;muscles&#39;,this.value)">
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Wdh-Ziel</span>
+        <input class="ex-edit-input" value="7+ (W1) → 10–12 (W2)" placeholder="z.B. 8–10 (W1) → 11–13 (W2)" oninput="updTmplExField(1,1,&#39;repRange&#39;,this.value)">
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Sätze</span>
+        <input class="ex-edit-input" type="number" min="1" max="10" value="2" style="flex:0 0 60px" oninput="updTmplExField(1,1,&#39;defaultSets&#39;,parseInt(this.value)||2)">
+        <span style="font-size:11px;color:var(--text3);margin-left:4px">Voreinstellung</span>
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Notiz</span>
+        <input class="ex-edit-input" value="Schulterblätter runter vor dem Zug, volle Extension unten" placeholder="Technik-Hinweis" oninput="updTmplExField(1,1,&#39;notes&#39;,this.value)">
+      </div>
+      <div style="margin-top:6px;font-size:11px;color:var(--accent);font-family:var(--mono)">
+        → Aktuelles Ziel: 10–12 Wdh
+      </div>
+    </div><div class="ex-edit-block" id="gte-1-2">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+        <input class="ex-edit-name" value="Dumbbell Romanian Deadlift" placeholder="Übungsname" oninput="updTmplExName(1,2,this.value)">
+        <button class="ex-edit-del" onclick="delTmplEx(1,2)">✕</button>
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Muskeln</span>
+        <input class="ex-edit-input" value="Adductors · Glutes · Hamstrings" placeholder="z.B. Chest · Triceps" oninput="updTmplExField(1,2,&#39;muscles&#39;,this.value)">
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Wdh-Ziel</span>
+        <input class="ex-edit-input" value="8–10 (W1) → 11–13 (W2)" placeholder="z.B. 8–10 (W1) → 11–13 (W2)" oninput="updTmplExField(1,2,&#39;repRange&#39;,this.value)">
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Sätze</span>
+        <input class="ex-edit-input" type="number" min="1" max="10" value="2" style="flex:0 0 60px" oninput="updTmplExField(1,2,&#39;defaultSets&#39;,parseInt(this.value)||2)">
+        <span style="font-size:11px;color:var(--text3);margin-left:4px">Voreinstellung</span>
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Notiz</span>
+        <input class="ex-edit-input" value="Rücken gerade, Hüfte schiebt nach hinten, Dehnung spüren" placeholder="Technik-Hinweis" oninput="updTmplExField(1,2,&#39;notes&#39;,this.value)">
+      </div>
+      <div style="margin-top:6px;font-size:11px;color:var(--accent);font-family:var(--mono)">
+        → Aktuelles Ziel: 8–10 Wdh
+      </div>
+    </div><div class="ex-edit-block" id="gte-1-3">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+        <input class="ex-edit-name" value="Neutral Grip Pec Deck Fly" placeholder="Übungsname" oninput="updTmplExName(1,3,this.value)">
+        <button class="ex-edit-del" onclick="delTmplEx(1,3)">✕</button>
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Muskeln</span>
+        <input class="ex-edit-input" value="Chest · Front Delts" placeholder="z.B. Chest · Triceps" oninput="updTmplExField(1,3,&#39;muscles&#39;,this.value)">
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Wdh-Ziel</span>
+        <input class="ex-edit-input" value="9+ (W1) → 11–13 (W2)" placeholder="z.B. 8–10 (W1) → 11–13 (W2)" oninput="updTmplExField(1,3,&#39;repRange&#39;,this.value)">
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Sätze</span>
+        <input class="ex-edit-input" type="number" min="1" max="10" value="2" style="flex:0 0 60px" oninput="updTmplExField(1,3,&#39;defaultSets&#39;,parseInt(this.value)||2)">
+        <span style="font-size:11px;color:var(--text3);margin-left:4px">Voreinstellung</span>
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Notiz</span>
+        <input class="ex-edit-input" value="Volle Kontraktion vorne, kontrolliert zurück" placeholder="Technik-Hinweis" oninput="updTmplExField(1,3,&#39;notes&#39;,this.value)">
+      </div>
+      <div style="margin-top:6px;font-size:11px;color:var(--accent);font-family:var(--mono)">
+        → Aktuelles Ziel: 11–13 Wdh
+      </div>
+    </div><div class="ex-edit-block" id="gte-1-4">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+        <input class="ex-edit-name" value="Dual Cable Lateral Raise" placeholder="Übungsname" oninput="updTmplExName(1,4,this.value)">
+        <button class="ex-edit-del" onclick="delTmplEx(1,4)">✕</button>
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Muskeln</span>
+        <input class="ex-edit-input" value="Side Delts · Front Delts · Upper Traps" placeholder="z.B. Chest · Triceps" oninput="updTmplExField(1,4,&#39;muscles&#39;,this.value)">
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Wdh-Ziel</span>
+        <input class="ex-edit-input" value="9+ (W1) → 11–13 (W2)" placeholder="z.B. 8–10 (W1) → 11–13 (W2)" oninput="updTmplExField(1,4,&#39;repRange&#39;,this.value)">
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Sätze</span>
+        <input class="ex-edit-input" type="number" min="1" max="10" value="2" style="flex:0 0 60px" oninput="updTmplExField(1,4,&#39;defaultSets&#39;,parseInt(this.value)||2)">
+        <span style="font-size:11px;color:var(--text3);margin-left:4px">Voreinstellung</span>
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Notiz</span>
+        <input class="ex-edit-input" value="Kabel kreuzen vor dem Körper, gleichmäßiger Bogen" placeholder="Technik-Hinweis" oninput="updTmplExField(1,4,&#39;notes&#39;,this.value)">
+      </div>
+      <div style="margin-top:6px;font-size:11px;color:var(--accent);font-family:var(--mono)">
+        → Aktuelles Ziel: 11–13 Wdh
+      </div>
+    </div><div class="ex-edit-block" id="gte-1-5">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+        <input class="ex-edit-name" value="Dead Hang" placeholder="Übungsname" oninput="updTmplExName(1,5,this.value)">
+        <button class="ex-edit-del" onclick="delTmplEx(1,5)">✕</button>
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Muskeln</span>
+        <input class="ex-edit-input" value="Forearms · Lats · Shoulders" placeholder="z.B. Chest · Triceps" oninput="updTmplExField(1,5,&#39;muscles&#39;,this.value)">
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Wdh-Ziel</span>
+        <input class="ex-edit-input" value="Standard Set" placeholder="z.B. 8–10 (W1) → 11–13 (W2)" oninput="updTmplExField(1,5,&#39;repRange&#39;,this.value)">
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Sätze</span>
+        <input class="ex-edit-input" type="number" min="1" max="10" value="2" style="flex:0 0 60px" oninput="updTmplExField(1,5,&#39;defaultSets&#39;,parseInt(this.value)||2)">
+        <span style="font-size:11px;color:var(--text3);margin-left:4px">Voreinstellung</span>
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Notiz</span>
+        <input class="ex-edit-input" value="So lange wie möglich, Schultern aktiv unten halten" placeholder="Technik-Hinweis" oninput="updTmplExField(1,5,&#39;notes&#39;,this.value)">
+      </div>
+      <div style="margin-top:6px;font-size:11px;color:var(--accent);font-family:var(--mono)">
+        → Aktuelles Ziel: Standard Set
+      </div>
+    </div><div class="ex-edit-block" id="gte-1-6">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+        <input class="ex-edit-name" value="Single Arm DB Preacher Curl" placeholder="Übungsname" oninput="updTmplExName(1,6,this.value)">
+        <button class="ex-edit-del" onclick="delTmplEx(1,6)">✕</button>
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Muskeln</span>
+        <input class="ex-edit-input" value="Biceps" placeholder="z.B. Chest · Triceps" oninput="updTmplExField(1,6,&#39;muscles&#39;,this.value)">
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Wdh-Ziel</span>
+        <input class="ex-edit-input" value="9+ (W1) → 11–13 (W2)" placeholder="z.B. 8–10 (W1) → 11–13 (W2)" oninput="updTmplExField(1,6,&#39;repRange&#39;,this.value)">
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Sätze</span>
+        <input class="ex-edit-input" type="number" min="1" max="10" value="2" style="flex:0 0 60px" oninput="updTmplExField(1,6,&#39;defaultSets&#39;,parseInt(this.value)||2)">
+        <span style="font-size:11px;color:var(--text3);margin-left:4px">Voreinstellung</span>
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Notiz</span>
+        <input class="ex-edit-input" value="Oberarm liegt flach auf Pad, volle Beugung oben" placeholder="Technik-Hinweis" oninput="updTmplExField(1,6,&#39;notes&#39;,this.value)">
+      </div>
+      <div style="margin-top:6px;font-size:11px;color:var(--accent);font-family:var(--mono)">
+        → Aktuelles Ziel: 11–13 Wdh
+      </div>
+    </div><button class="add-link-btn" style="margin-top:4px" onclick="addTmplEx(1)">+ Übung hinzufügen</button>
+     <button class="save-btn" style="width:100%;margin-top:12px" onclick="saveTmpl(1)">✓ Vorlage speichern</button></div>
+    </div></div>
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+  <div class="nav-item" data-view="week" onclick="switchView(&#39;week&#39;)"><div class="nav-icon">📅</div><div class="nav-label">Woche</div></div>
+  <div class="nav-item" data-view="gym" onclick="switchView(&#39;gym&#39;)"> <div class="nav-icon">🏋️</div><div class="nav-label">Gym</div></div>
+  <div class="nav-item nav-active" data-view="settings" onclick="switchView(&#39;settings&#39;)"><div class="nav-icon">⚙️</div><div class="nav-label">Planen</div></div>
+  <div class="nav-item" data-view="data" onclick="switchView(&#39;data&#39;)"><div class="nav-icon">💾</div><div class="nav-label">Daten</div></div>
+</div>
+
+<!-- OVERLAYS -->
+<div class="overlay" id="detail-overlay" onclick="closeOv(&#39;detail-overlay&#39;,event)" data-sid="gym_0" data-wk="2026-04-12">  <div class="sheet"><div class="sheet-handle"></div><div id="detail-content">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+      <div style="width:12px;height:12px;border-radius:50%;background:#fb923c"></div>
+      <div class="sheet-title">Gym</div></div>
+    <div class="sheet-sub">Gym · Kompakt</div>
+    <div class="section-title">Notfallpläne</div>
+       <div class="plan-btn-row">
+         
+           <button class="plan-select-btn" onclick="selectPlan(&#39;gym_0&#39;,&#39;2026-04-12&#39;,0)">
+             <div class="plan-dot" style="background:#fb923c"></div>
+             <div class="plan-info">
+               <div class="plan-name">Volle Session</div>
+               <div class="plan-duration">75 min</div>
+             </div>
+             <div class="plan-arrow">›</div>
+           </button>
+           <button class="plan-select-btn plan-active" onclick="selectPlan(&#39;gym_0&#39;,&#39;2026-04-12&#39;,1)">
+             <div class="plan-dot" style="background:#fb923c"></div>
+             <div class="plan-info">
+               <div class="plan-name">Kompakt</div>
+               <div class="plan-duration">45 min</div>
+             </div>
+             <div class="plan-arrow">✓</div>
+           </button>
+       </div>
+       <div class="plan-links-wrap" id="plan-links-gym_0"><p style="font-size:13px;color:var(--text3);padding-top:6px">Kein Video für diesen Plan hinterlegt.</p></div><div class="section-title">Notizen</div><div class="notes-box">Push → Pull → Legs. Immer 5 min Warmup Rudergerät.</div>
+    <button class="close-btn" onclick="closeOvBtn(&#39;detail-overlay&#39;)">Schließen</button></div></div></div>
+<div class="overlay" id="move-overlay" onclick="closeOv(&#39;move-overlay&#39;,event)">    <div class="sheet"><div class="sheet-handle"></div><div id="move-content"></div></div></div>
+<div class="overlay" id="new-habit-overlay" onclick="closeOv(&#39;new-habit-overlay&#39;,event)"><div class="sheet"><div class="sheet-handle"></div><div id="new-habit-content"></div></div></div>
+<div class="overlay" id="gym-overlay" onclick="closeOv(&#39;gym-overlay&#39;,event)">     <div class="sheet"><div class="sheet-handle"></div><div id="gym-content">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <div style="width:12px;height:12px;border-radius:50%;background:#a78bfa"></div>
+      <div class="sheet-title" style="margin:0">Workout B – Full Body</div>
+      <span style="font-size:12px;color:var(--text2);margin-left:auto">So., 12. Apr.</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+        <div class="prog-badge">📈 W1 · Session 2/2</div>
+        <span style="font-size:11px;color:var(--text3)">Erste Session</span>
+        
+      </div>
+    <div class="stats-row">
+      <div class="stat-pill"><div class="stat-pill-val">7</div><div class="stat-pill-lbl">Übungen</div></div>
+      <div class="stat-pill"><div class="stat-pill-val" id="sp-sets">14</div><div class="stat-pill-lbl">Sätze</div></div>
+      <div class="stat-pill"><div class="stat-pill-val" id="sp-vol">40</div><div class="stat-pill-lbl">kg Volumen</div></div>
+    </div>
+    <div class="exercise-block" id="ex-0-0">
+      <div class="exercise-name-row">
+        <input class="exercise-name-input" value="Seated Dumbbell Overhead Press" placeholder="Übungsname" oninput="updExName(0,0,this.value)">
+        <button class="del-exercise-btn" onclick="delExercise(0,0)">✕</button>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:6px;display:flex;align-items:center;gap:6px">
+        <span>Front Delts · Serratus · Side Delts</span></div>
+      <div style="display:flex;gap:7px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:5px;background:var(--bg4);border-radius:7px;padding:4px 10px">
+          <span style="font-size:16px;font-weight:700;color:var(--text);font-family:var(--mono)">2</span>
+          <span style="font-size:10px;color:var(--text3);line-height:1.2">Sätze<br>heute</span>
+        </div>
+        <div style="flex:1;font-size:11px;background:rgba(200,240,68,.08);border:1px solid rgba(200,240,68,.15);border-radius:7px;padding:4px 9px;color:#c8f044">
+          <span style="opacity:.6">Ziel: </span>8–10 Wdh
+        </div>
+      </div>
+      <table class="sets-table">
+        <thead><tr>
+          <th style="width:28px"></th>
+          <th>Wdh</th><th>kg</th><th style="width:28px"></th>
+        </tr>
+        </thead>
+        <tbody><tr>
+        <td class="set-num" style="">S1</td>
+        <td>
+          <input class="set-input" type="number" min="0" placeholder="–" value="" oninput="updSet(0,0,0,&#39;reps&#39;,this.value)">
+          
+        </td>
+        <td>
+          <input class="set-input" type="number" min="0" step="0.5" placeholder="–" value="" oninput="updSet(0,0,0,&#39;weight&#39;,this.value)">
+          
+        </td>
+        <td>
+          <button onclick="delSet(0,0,0)" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:0 4px;">✕</button>
+        </td>
+      </tr><tr>
+        <td class="set-num" style="">S2</td>
+        <td>
+          <input class="set-input" type="number" min="0" placeholder="–" value="" oninput="updSet(0,0,1,&#39;reps&#39;,this.value)">
+          
+        </td>
+        <td>
+          <input class="set-input" type="number" min="0" step="0.5" placeholder="–" value="" oninput="updSet(0,0,1,&#39;weight&#39;,this.value)">
+          
+        </td>
+        <td>
+          <button onclick="delSet(0,0,1)" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:0 4px;">✕</button>
+        </td>
+      </tr></tbody>
+      </table>
+      <button class="add-set-btn" onclick="addSet(0,0)">+ Satz hinzufügen</button>
+      <div style="font-size:11px;color:var(--text3);border-left:2px solid var(--border2);padding:4px 8px;margin-top:8px;line-height:1.5">Sitzen aufrecht, keine Hohlkreuz-Kompensation</div>
+      <div class="ex-video-row">
+        <input class="ex-video-input" placeholder="▶ YouTube-Link zur Ausführung (optional)" value="" oninput="updExVideo(0,0,this.value)">
+        
+      </div>
+    </div><div class="exercise-block" id="ex-0-1">
+      <div class="exercise-name-row">
+        <input class="exercise-name-input" value="Weighted Chin-Up" placeholder="Übungsname" oninput="updExName(0,1,this.value)">
+        <button class="del-exercise-btn" onclick="delExercise(0,1)">✕</button>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:6px;display:flex;align-items:center;gap:6px">
+        <span>Biceps · Lats · Forearms · Rear Delts</span></div>
+      <div style="display:flex;gap:7px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:5px;background:var(--bg4);border-radius:7px;padding:4px 10px">
+          <span style="font-size:16px;font-weight:700;color:var(--text);font-family:var(--mono)">2</span>
+          <span style="font-size:10px;color:var(--text3);line-height:1.2">Sätze<br>heute</span>
+        </div>
+        <div style="flex:1;font-size:11px;background:rgba(200,240,68,.08);border:1px solid rgba(200,240,68,.15);border-radius:7px;padding:4px 9px;color:#c8f044">
+          <span style="opacity:.6">Ziel: </span>10–12 Wdh
+        </div>
+      </div>
+      <table class="sets-table">
+        <thead><tr>
+          <th style="width:28px"></th>
+          <th>Wdh</th><th>kg</th><th style="width:28px"></th>
+        </tr>
+        </thead>
+        <tbody><tr>
+        <td class="set-num" style="">S1</td>
+        <td>
+          <input class="set-input" type="number" min="0" placeholder="–" value="" oninput="updSet(0,1,0,&#39;reps&#39;,this.value)">
+          
+        </td>
+        <td>
+          <input class="set-input" type="number" min="0" step="0.5" placeholder="–" value="" oninput="updSet(0,1,0,&#39;weight&#39;,this.value)">
+          
+        </td>
+        <td>
+          <button onclick="delSet(0,1,0)" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:0 4px;">✕</button>
+        </td>
+      </tr><tr>
+        <td class="set-num" style="">S2</td>
+        <td>
+          <input class="set-input" type="number" min="0" placeholder="–" value="" oninput="updSet(0,1,1,&#39;reps&#39;,this.value)">
+          
+        </td>
+        <td>
+          <input class="set-input" type="number" min="0" step="0.5" placeholder="–" value="" oninput="updSet(0,1,1,&#39;weight&#39;,this.value)">
+          
+        </td>
+        <td>
+          <button onclick="delSet(0,1,1)" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:0 4px;">✕</button>
+        </td>
+      </tr></tbody>
+      </table>
+      <button class="add-set-btn" onclick="addSet(0,1)">+ Satz hinzufügen</button>
+      <div style="font-size:11px;color:var(--text3);border-left:2px solid var(--border2);padding:4px 8px;margin-top:8px;line-height:1.5">Schulterblätter runter vor dem Zug, volle Extension unten</div>
+      <div class="ex-video-row">
+        <input class="ex-video-input" placeholder="▶ YouTube-Link zur Ausführung (optional)" value="" oninput="updExVideo(0,1,this.value)">
+        
+      </div>
+    </div><div class="exercise-block" id="ex-0-2">
+      <div class="exercise-name-row">
+        <input class="exercise-name-input" value="Dumbbell Romanian Deadlift" placeholder="Übungsname" oninput="updExName(0,2,this.value)">
+        <button class="del-exercise-btn" onclick="delExercise(0,2)">✕</button>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:6px;display:flex;align-items:center;gap:6px">
+        <span>Adductors · Glutes · Hamstrings</span></div>
+      <div style="display:flex;gap:7px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:5px;background:var(--bg4);border-radius:7px;padding:4px 10px">
+          <span style="font-size:16px;font-weight:700;color:var(--text);font-family:var(--mono)">2</span>
+          <span style="font-size:10px;color:var(--text3);line-height:1.2">Sätze<br>heute</span>
+        </div>
+        <div style="flex:1;font-size:11px;background:rgba(200,240,68,.08);border:1px solid rgba(200,240,68,.15);border-radius:7px;padding:4px 9px;color:#c8f044">
+          <span style="opacity:.6">Ziel: </span>8–10 Wdh
+        </div>
+      </div>
+      <table class="sets-table">
+        <thead><tr>
+          <th style="width:28px"></th>
+          <th>Wdh</th><th>kg</th><th style="width:28px"></th>
+        </tr>
+        </thead>
+        <tbody><tr>
+        <td class="set-num" style="">S1</td>
+        <td>
+          <input class="set-input" type="number" min="0" placeholder="–" value="" oninput="updSet(0,2,0,&#39;reps&#39;,this.value)">
+          
+        </td>
+        <td>
+          <input class="set-input" type="number" min="0" step="0.5" placeholder="–" value="" oninput="updSet(0,2,0,&#39;weight&#39;,this.value)">
+          
+        </td>
+        <td>
+          <button onclick="delSet(0,2,0)" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:0 4px;">✕</button>
+        </td>
+      </tr><tr>
+        <td class="set-num" style="">S2</td>
+        <td>
+          <input class="set-input" type="number" min="0" placeholder="–" value="" oninput="updSet(0,2,1,&#39;reps&#39;,this.value)">
+          
+        </td>
+        <td>
+          <input class="set-input" type="number" min="0" step="0.5" placeholder="–" value="" oninput="updSet(0,2,1,&#39;weight&#39;,this.value)">
+          
+        </td>
+        <td>
+          <button onclick="delSet(0,2,1)" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:0 4px;">✕</button>
+        </td>
+      </tr></tbody>
+      </table>
+      <button class="add-set-btn" onclick="addSet(0,2)">+ Satz hinzufügen</button>
+      <div style="font-size:11px;color:var(--text3);border-left:2px solid var(--border2);padding:4px 8px;margin-top:8px;line-height:1.5">Rücken gerade, Hüfte schiebt nach hinten, Dehnung spüren</div>
+      <div class="ex-video-row">
+        <input class="ex-video-input" placeholder="▶ YouTube-Link zur Ausführung (optional)" value="" oninput="updExVideo(0,2,this.value)">
+        
+      </div>
+    </div><div class="exercise-block" id="ex-0-3">
+      <div class="exercise-name-row">
+        <input class="exercise-name-input" value="Neutral Grip Pec Deck Fly" placeholder="Übungsname" oninput="updExName(0,3,this.value)">
+        <button class="del-exercise-btn" onclick="delExercise(0,3)">✕</button>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:6px;display:flex;align-items:center;gap:6px">
+        <span>Chest · Front Delts</span></div>
+      <div style="display:flex;gap:7px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:5px;background:var(--bg4);border-radius:7px;padding:4px 10px">
+          <span style="font-size:16px;font-weight:700;color:var(--text);font-family:var(--mono)">2</span>
+          <span style="font-size:10px;color:var(--text3);line-height:1.2">Sätze<br>heute</span>
+        </div>
+        <div style="flex:1;font-size:11px;background:rgba(200,240,68,.08);border:1px solid rgba(200,240,68,.15);border-radius:7px;padding:4px 9px;color:#c8f044">
+          <span style="opacity:.6">Ziel: </span>11–13 Wdh
+        </div>
+      </div>
+      <table class="sets-table">
+        <thead><tr>
+          <th style="width:28px"></th>
+          <th>Wdh</th><th>kg</th><th style="width:28px"></th>
+        </tr>
+        </thead>
+        <tbody><tr>
+        <td class="set-num" style="">S1</td>
+        <td>
+          <input class="set-input" type="number" min="0" placeholder="–" value="" oninput="updSet(0,3,0,&#39;reps&#39;,this.value)">
+          
+        </td>
+        <td>
+          <input class="set-input" type="number" min="0" step="0.5" placeholder="–" value="" oninput="updSet(0,3,0,&#39;weight&#39;,this.value)">
+          
+        </td>
+        <td>
+          <button onclick="delSet(0,3,0)" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:0 4px;">✕</button>
+        </td>
+      </tr><tr>
+        <td class="set-num" style="">S2</td>
+        <td>
+          <input class="set-input" type="number" min="0" placeholder="–" value="" oninput="updSet(0,3,1,&#39;reps&#39;,this.value)">
+          
+        </td>
+        <td>
+          <input class="set-input" type="number" min="0" step="0.5" placeholder="–" value="" oninput="updSet(0,3,1,&#39;weight&#39;,this.value)">
+          
+        </td>
+        <td>
+          <button onclick="delSet(0,3,1)" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:0 4px;">✕</button>
+        </td>
+      </tr></tbody>
+      </table>
+      <button class="add-set-btn" onclick="addSet(0,3)">+ Satz hinzufügen</button>
+      <div style="font-size:11px;color:var(--text3);border-left:2px solid var(--border2);padding:4px 8px;margin-top:8px;line-height:1.5">Volle Kontraktion vorne, kontrolliert zurück</div>
+      <div class="ex-video-row">
+        <input class="ex-video-input" placeholder="▶ YouTube-Link zur Ausführung (optional)" value="" oninput="updExVideo(0,3,this.value)">
+        
+      </div>
+    </div><div class="exercise-block" id="ex-0-4">
+      <div class="exercise-name-row">
+        <input class="exercise-name-input" value="Dual Cable Lateral Raise" placeholder="Übungsname" oninput="updExName(0,4,this.value)">
+        <button class="del-exercise-btn" onclick="delExercise(0,4)">✕</button>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:6px;display:flex;align-items:center;gap:6px">
+        <span>Side Delts · Front Delts · Upper Traps</span></div>
+      <div style="display:flex;gap:7px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:5px;background:var(--bg4);border-radius:7px;padding:4px 10px">
+          <span style="font-size:16px;font-weight:700;color:var(--text);font-family:var(--mono)">2</span>
+          <span style="font-size:10px;color:var(--text3);line-height:1.2">Sätze<br>heute</span>
+        </div>
+        <div style="flex:1;font-size:11px;background:rgba(200,240,68,.08);border:1px solid rgba(200,240,68,.15);border-radius:7px;padding:4px 9px;color:#c8f044">
+          <span style="opacity:.6">Ziel: </span>11–13 Wdh
+        </div>
+      </div>
+      <table class="sets-table">
+        <thead><tr>
+          <th style="width:28px"></th>
+          <th>Wdh</th><th>kg</th><th style="width:28px"></th>
+        </tr>
+        </thead>
+        <tbody><tr>
+        <td class="set-num" style="">S1</td>
+        <td>
+          <input class="set-input" type="number" min="0" placeholder="–" value="" oninput="updSet(0,4,0,&#39;reps&#39;,this.value)">
+          
+        </td>
+        <td>
+          <input class="set-input" type="number" min="0" step="0.5" placeholder="–" value="" oninput="updSet(0,4,0,&#39;weight&#39;,this.value)">
+          
+        </td>
+        <td>
+          <button onclick="delSet(0,4,0)" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:0 4px;">✕</button>
+        </td>
+      </tr><tr>
+        <td class="set-num" style="">S2</td>
+        <td>
+          <input class="set-input" type="number" min="0" placeholder="–" value="" oninput="updSet(0,4,1,&#39;reps&#39;,this.value)">
+          
+        </td>
+        <td>
+          <input class="set-input" type="number" min="0" step="0.5" placeholder="–" value="" oninput="updSet(0,4,1,&#39;weight&#39;,this.value)">
+          
+        </td>
+        <td>
+          <button onclick="delSet(0,4,1)" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:0 4px;">✕</button>
+        </td>
+      </tr></tbody>
+      </table>
+      <button class="add-set-btn" onclick="addSet(0,4)">+ Satz hinzufügen</button>
+      <div style="font-size:11px;color:var(--text3);border-left:2px solid var(--border2);padding:4px 8px;margin-top:8px;line-height:1.5">Kabel kreuzen vor dem Körper, gleichmäßiger Bogen</div>
+      <div class="ex-video-row">
+        <input class="ex-video-input" placeholder="▶ YouTube-Link zur Ausführung (optional)" value="" oninput="updExVideo(0,4,this.value)">
+        
+      </div>
+    </div><div class="exercise-block" id="ex-0-5">
+      <div class="exercise-name-row">
+        <input class="exercise-name-input" value="Dead Hang" placeholder="Übungsname" oninput="updExName(0,5,this.value)">
+        <button class="del-exercise-btn" onclick="delExercise(0,5)">✕</button>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:6px;display:flex;align-items:center;gap:6px">
+        <span>Forearms · Lats · Shoulders</span></div>
+      <div style="display:flex;gap:7px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:5px;background:var(--bg4);border-radius:7px;padding:4px 10px">
+          <span style="font-size:16px;font-weight:700;color:var(--text);font-family:var(--mono)">2</span>
+          <span style="font-size:10px;color:var(--text3);line-height:1.2">Sätze<br>heute</span>
+        </div>
+        <div style="flex:1;font-size:11px;background:rgba(200,240,68,.08);border:1px solid rgba(200,240,68,.15);border-radius:7px;padding:4px 9px;color:#c8f044">
+          <span style="opacity:.6">Ziel: </span>Standard Set
+        </div>
+      </div>
+      <table class="sets-table">
+        <thead><tr>
+          <th style="width:28px"></th>
+          <th>Wdh</th><th>kg</th><th style="width:28px"></th>
+        </tr>
+        </thead>
+        <tbody><tr>
+        <td class="set-num" style="">S1</td>
+        <td>
+          <input class="set-input" type="number" min="0" placeholder="–" value="2" oninput="updSet(0,5,0,&#39;reps&#39;,this.value)">
+          
+        </td>
+        <td>
+          <input class="set-input" type="number" min="0" step="0.5" placeholder="–" value="20" oninput="updSet(0,5,0,&#39;weight&#39;,this.value)">
+          
+        </td>
+        <td>
+          <button onclick="delSet(0,5,0)" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:0 4px;">✕</button>
+        </td>
+      </tr><tr>
+        <td class="set-num" style="">S2</td>
+        <td>
+          <input class="set-input" type="number" min="0" placeholder="–" value="2" oninput="updSet(0,5,1,&#39;reps&#39;,this.value)">
+          
+        </td>
+        <td>
+          <input class="set-input" type="number" min="0" step="0.5" placeholder="–" value="" oninput="updSet(0,5,1,&#39;weight&#39;,this.value)">
+          
+        </td>
+        <td>
+          <button onclick="delSet(0,5,1)" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:0 4px;">✕</button>
+        </td>
+      </tr></tbody>
+      </table>
+      <button class="add-set-btn" onclick="addSet(0,5)">+ Satz hinzufügen</button>
+      <div style="font-size:11px;color:var(--text3);border-left:2px solid var(--border2);padding:4px 8px;margin-top:8px;line-height:1.5">So lange wie möglich, Schultern aktiv unten halten</div>
+      <div class="ex-video-row">
+        <input class="ex-video-input" placeholder="▶ YouTube-Link zur Ausführung (optional)" value="" oninput="updExVideo(0,5,this.value)">
+        
+      </div>
+    </div><div class="exercise-block" id="ex-0-6">
+      <div class="exercise-name-row">
+        <input class="exercise-name-input" value="Single Arm DB Preacher Curl" placeholder="Übungsname" oninput="updExName(0,6,this.value)">
+        <button class="del-exercise-btn" onclick="delExercise(0,6)">✕</button>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:6px;display:flex;align-items:center;gap:6px">
+        <span>Biceps</span></div>
+      <div style="display:flex;gap:7px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:5px;background:var(--bg4);border-radius:7px;padding:4px 10px">
+          <span style="font-size:16px;font-weight:700;color:var(--text);font-family:var(--mono)">2</span>
+          <span style="font-size:10px;color:var(--text3);line-height:1.2">Sätze<br>heute</span>
+        </div>
+        <div style="flex:1;font-size:11px;background:rgba(200,240,68,.08);border:1px solid rgba(200,240,68,.15);border-radius:7px;padding:4px 9px;color:#c8f044">
+          <span style="opacity:.6">Ziel: </span>11–13 Wdh
+        </div>
+      </div>
+      <table class="sets-table">
+        <thead><tr>
+          <th style="width:28px"></th>
+          <th>Wdh</th><th>kg</th><th style="width:28px"></th>
+        </tr>
+        </thead>
+        <tbody><tr>
+        <td class="set-num" style="">S1</td>
+        <td>
+          <input class="set-input" type="number" min="0" placeholder="–" value="" oninput="updSet(0,6,0,&#39;reps&#39;,this.value)">
+          
+        </td>
+        <td>
+          <input class="set-input" type="number" min="0" step="0.5" placeholder="–" value="" oninput="updSet(0,6,0,&#39;weight&#39;,this.value)">
+          
+        </td>
+        <td>
+          <button onclick="delSet(0,6,0)" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:0 4px;">✕</button>
+        </td>
+      </tr><tr>
+        <td class="set-num" style="">S2</td>
+        <td>
+          <input class="set-input" type="number" min="0" placeholder="–" value="" oninput="updSet(0,6,1,&#39;reps&#39;,this.value)">
+          
+        </td>
+        <td>
+          <input class="set-input" type="number" min="0" step="0.5" placeholder="–" value="" oninput="updSet(0,6,1,&#39;weight&#39;,this.value)">
+          
+        </td>
+        <td>
+          <button onclick="delSet(0,6,1)" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:0 4px;">✕</button>
+        </td>
+      </tr></tbody>
+      </table>
+      <button class="add-set-btn" onclick="addSet(0,6)">+ Satz hinzufügen</button>
+      <div style="font-size:11px;color:var(--text3);border-left:2px solid var(--border2);padding:4px 8px;margin-top:8px;line-height:1.5">Oberarm liegt flach auf Pad, volle Beugung oben</div>
+      <div class="ex-video-row">
+        <input class="ex-video-input" placeholder="▶ YouTube-Link zur Ausführung (optional)" value="" oninput="updExVideo(0,6,this.value)">
+        
+      </div>
+    </div>
+    <button class="add-exercise-btn" onclick="addExercise(0)">+ Übung hinzufügen</button>
+    <button class="save-btn" style="width:100%;margin-bottom:8px" onclick="finishSession(0)">✓ Session abschließen &amp; speichern</button>
+    <button onclick="deleteSession(0)" style="background:none;border:1px solid rgba(248,113,113,.25);border-radius:12px;padding:11px;font-size:13px;color:var(--danger);cursor:pointer;font-family:var(--font);width:100%">Session löschen</button></div></div></div>
+
+<div class="overlay" id="gym-tmpl-overlay" onclick="closeOv(&#39;gym-tmpl-overlay&#39;,event)"><div class="sheet"><div class="sheet-handle"></div><div id="gym-tmpl-content"></div></div></div>
+
+<div class="toast" id="toast">✓ Gespeichert</div>
+
+<script>
+// ─── CONSTANTS ────────────────────────────────────────────────────────────────
+const DAY_NAMES  = ['Mo','Di','Mi','Do','Fr','Sa','So'];
+const DAY_FULL   = ['Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag','Sonntag'];
+const COLORS     = ['#a78bfa','#34d399','#fb923c','#60a5fa','#f472b6','#facc15','#f87171','#2dd4bf','#818cf8'];
+
+const DEFAULT_HABITS = [
+  { id:'stretch', name:'Stretching', color:'#a78bfa', category:'Stretching', defaultDays:[0,2,5],
+    notes:'Fokus: Hüftöffner, Oberschenkel, Schultern. Adduktoren nach dem Training.',
+    plans:[
+      {name:'Volle Version',   duration:'20 min', links:[
+        {label:'Full Body Stretching – 20 min', url:'https://www.youtube.com/watch?v=sTANio_2E0Q'},
+        {label:'Morning Mobility Routine',       url:'https://www.youtube.com/watch?v=g_tea8ZNk5A'}
+      ]},
+      {name:'Kurze Version',   duration:'8 min',  links:[
+        {label:'Quick Stretch – 8 min', url:'https://www.youtube.com/watch?v=FI51zRzgIe4'}
+      ]},
+      {name:'Minimal (5 min)', duration:'5 min',  links:[
+        {label:'Quick Stretch – 8 min', url:'https://www.youtube.com/watch?v=FI51zRzgIe4'}
+      ]}
+    ]
+  },
+  { id:'core', name:'Core-Training', color:'#34d399', category:'Core', defaultDays:[1,3],
+    notes:'3× Plank 45s, 3×20 Crunches, 3×15 Leg Raises. Pause 30s.',
+    plans:[
+      {name:'Volle Version', duration:'15 min', links:[
+        {label:'10-Min Core Workout', url:'https://www.youtube.com/watch?v=DHD1-2P94DI'}
+      ]},
+      {name:'Express',       duration:'7 min',  links:[
+        {label:'10-Min Core Workout', url:'https://www.youtube.com/watch?v=DHD1-2P94DI'}
+      ]}
+    ]
+  },
+  { id:'home', name:'Home', color:'#2dd4bf', category:'Home Workout', defaultDays:[1,3,5],
+    notes:'Schnelles Abs-Workout für zuhause. Kein Equipment nötig.',
+    plans:[
+      {name:'Abs – 7 min',    duration:'7 min',  links:[
+        {label:'7 Mins Abs Training', url:'https://www.youtube.com/watch?v=ztfX0vFOD0E'}
+      ]},
+      {name:'Nur Stretching', duration:'8 min',  links:[
+        {label:'Quick Stretch – 8 min', url:'https://www.youtube.com/watch?v=FI51zRzgIe4'}
+      ]}
+    ]
+  },
+  { id:'gym', name:'Gym', color:'#fb923c', category:'Gym', defaultDays:[0,5],
+    notes:'Push → Pull → Legs. Immer 5 min Warmup Rudergerät.',
+    plans:[
+      {name:'Volle Session', duration:'75 min', links:[
+        {label:'Push Day – Brust & Schulter', url:'https://www.youtube.com/watch?v=EgVT1n7iH_I'},
+        {label:'Pull Day – Rücken & Bizeps',  url:'https://www.youtube.com/watch?v=Y7IgETpaBTU'}
+      ]},
+      {name:'Kompakt',       duration:'45 min', links:[
+        {label:'Push Day – Brust & Schulter', url:'https://www.youtube.com/watch?v=EgVT1n7iH_I'}
+      ]}
+    ]
+  },
+  { id:'lesen', name:'Lesen / Uni', color:'#60a5fa', category:'Uni', defaultDays:[0,2,4,6],
+    notes:'45 min fokussiert. Pomodoro 25+5.',
+    plans:[
+      {name:'Tief fokussiert', duration:'90 min', links:[]},
+      {name:'Normal',          duration:'45 min', links:[]},
+      {name:'Quick Review',    duration:'20 min', links:[]}
+    ]
+  }
+];
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+function load(k,def){ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):def; }catch{return def;} }
+function save(k,v){ localStorage.setItem(k,JSON.stringify(v)); }
+
+let appData = load('fp3_data', { habits: DEFAULT_HABITS, weeks: {}, gymSessions: [] });
+if (!appData.weeks)       appData.weeks = {};
+if (!appData.gymSessions) appData.gymSessions = [];
+function saveApp(){ save('fp3_data', appData); }
+
+// Week navigation offset (0 = current week)
+let weekOffset = 0;
+const realToday = new Date();
+const realTodayIdx = (realToday.getDay()+6)%7;
+
+function getWeekKey(offset=0){
+  const d = new Date(realToday);
+  d.setDate(d.getDate() - realTodayIdx + offset*7);
+  d.setHours(0,0,0,0);
+  return d.toISOString().slice(0,10);
+}
+function getWeekDates(offset=0){
+  const dates=[]; const mon=new Date(realToday);
+  mon.setDate(realToday.getDate()-realTodayIdx+offset*7);
+  for(let i=0;i<7;i++){const d=new Date(mon);d.setDate(mon.getDate()+i);dates.push(d);}
+  return dates;
+}
+function getWeekNum(d){
+  const dd=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));
+  dd.setUTCDate(dd.getUTCDate()+4-(dd.getUTCDay()||7));
+  return Math.ceil((((dd-new Date(Date.UTC(dd.getUTCFullYear(),0,1)))/86400000)+1)/7);
+}
+
+// selectedDay is index 0-6 within the displayed week
+let selectedDay = realTodayIdx;
+
+function currentWeekKey(){ return getWeekKey(weekOffset); }
+
+function ensureWeek(wk){
+  if(!appData.weeks[wk]) appData.weeks[wk]={};
+  appData.habits.forEach(h=>{
+    (h.defaultDays||[]).forEach(di=>{
+      const sid=`${h.id}_${di}`;
+      if(!appData.weeks[wk][sid])
+        appData.weeks[wk][sid]={habitId:h.id,plannedDay:di,actualDay:di,done:false,movedFrom:null,activePlan:null};
+    });
+  });
+  // remove orphan slots
+  const ids=appData.habits.map(h=>h.id);
+  Object.keys(appData.weeks[wk]).forEach(sid=>{
+    if(!ids.includes(appData.weeks[wk][sid].habitId)) delete appData.weeks[wk][sid];
+  });
+}
+ensureWeek(currentWeekKey());
+
+// ─── VIEW SWITCHING ───────────────────────────────────────────────────────────
+function switchView(v){
+  document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));
+  document.getElementById('view-'+v).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('nav-active'));
+  document.querySelector(`[data-view="${v}"]`).classList.add('nav-active');
+  if(v==='week')     renderWeek();
+  if(v==='gym')      renderGymList();
+  if(v==='settings') renderSettings();
+  if(v==='data')     renderDataView();
+}
+
+// ─── WEEK NAVIGATION ──────────────────────────────────────────────────────────
+function shiftWeek(dir){
+  weekOffset += dir;
+  // When jumping to a new week, default to first day or today if current week
+  selectedDay = weekOffset===0 ? realTodayIdx : 0;
+  ensureWeek(currentWeekKey());
+  saveApp();
+  renderWeek();
+}
+
+// ─── WEEK RENDER ──────────────────────────────────────────────────────────────
+function renderWeek(){
+  const wk    = currentWeekKey();
+  const dates = getWeekDates(weekOffset);
+  const slots = appData.weeks[wk];
+  const isCurrentWeek = weekOffset===0;
+
+  // Header
+  document.getElementById('header-date').textContent =
+    realToday.toLocaleDateString('de-DE',{weekday:'long',day:'numeric',month:'long'});
+  document.getElementById('week-badge').textContent = 'KW '+getWeekNum(dates[0]);
+
+  // Week nav label
+  const label = isCurrentWeek ? 'Diese Woche'
+    : weekOffset===1 ? 'Nächste Woche'
+    : weekOffset===-1 ? 'Letzte Woche'
+    : `KW ${getWeekNum(dates[0])} · ${dates[0].getDate()}.${dates[0].getMonth()+1}–${dates[6].getDate()}.${dates[6].getMonth()+1}`;
+  const navEl = document.getElementById('week-nav-label');
+  navEl.textContent = label;
+  navEl.className = 'week-nav-label' + (isCurrentWeek?' current-week':'');
+
+  // Strip
+  document.getElementById('week-strip').innerHTML = dates.map((date,i)=>{
+    const isTd  = isCurrentWeek && i===realTodayIdx;
+    const isAct = i===selectedDay;
+    const ds    = Object.values(slots).filter(s=>s.actualDay===i);
+    const dots  = ds.map(s=>{const h=appData.habits.find(h=>h.id===s.habitId);
+      return `<div class="day-dot${s.done?' done':''}" style="background:${h?h.color:'#888'}"></div>`;}).join('');
+    return `<div class="day-pill${isTd?' today':''}${isAct?' active':''}" onclick="selDay(${i})">
+      <div class="day-name">${DAY_NAMES[i]}</div>
+      <div class="day-num">${date.getDate()}</div>
+      <div class="day-dots">${dots}</div></div>`;
+  }).join('');
+
+  // Habit list
+  const daySlots = Object.entries(slots).filter(([,s])=>s.actualDay===selectedDay);
+  const list     = document.getElementById('habit-list');
+  if(!daySlots.length){
+    list.innerHTML=`<div class="empty-state"><div class="empty-icon">🌿</div>
+      <div class="empty-text">Kein Training für ${DAY_FULL[selectedDay]}.<br>Genieße den freien Tag!</div></div>`;
+    updateProgress(0,0); return;
+  }
+  updateProgress(daySlots.filter(([,s])=>s.done).length, daySlots.length);
+
+  list.innerHTML = daySlots.map(([sid,slot])=>{
+    const h=appData.habits.find(h=>h.id===slot.habitId); if(!h) return '';
+    const moved   = slot.movedFrom!==null && slot.movedFrom!==undefined;
+    const ap      = slot.activePlan!==null && slot.activePlan!==undefined
+      ? h.plans && h.plans[slot.activePlan] : null;
+    return `<div class="habit-card${slot.done?' done-card':''}${moved?' rescheduled':''}" onclick="openDetail('${sid}','${wk}')">
+      <div class="habit-bar" style="background:${h.color}"></div>
+      <div class="habit-info">
+        <div class="habit-name">${h.name}
+          ${h.links&&h.links.length?'<span class="tag tag-video">▶</span>':''}
+          ${moved?`<span class="tag tag-moved">↪ ${DAY_NAMES[slot.movedFrom]}</span>`:''}
+          ${ap?`<span class="tag tag-plan">${ap.name}</span>`:''}
+        </div>
+        <div class="habit-meta">${h.category}${h.notes?' · '+h.notes.slice(0,38)+'…':''}</div>
+      </div>
+      <div class="habit-actions">
+        <div class="checkbox${slot.done?' checked':''}" onclick="toggleDone(event,'${sid}','${wk}')"></div>
+        <button class="move-btn" onclick="openMove(event,'${sid}','${wk}')">↪</button>
+      </div></div>`;
+  }).join('');
+}
+
+function updateProgress(done,total){
+  const pct=total>0?Math.round(done/total*100):0;
+  document.getElementById('progress-fill').style.width=pct+'%';
+  document.getElementById('progress-count').textContent=`${done}/${total}`;
+  document.getElementById('progress-label').textContent=`${done} von ${total} ${total===1?'Einheit':'Einheiten'}`;
+}
+function selDay(i){ selectedDay=i; renderWeek(); }
+function toggleDone(e,sid,wk){
+  e.stopPropagation();
+  const s=appData.weeks[wk][sid]; if(!s) return;
+  s.done=!s.done; saveApp(); renderWeek();
+  showToast(s.done?'✓ Erledigt!':'Rückgängig');
+}
+
+// ─── DETAIL SHEET ─────────────────────────────────────────────────────────────
+function openDetail(sid, wk){
+  const slot = appData.weeks[wk][sid];
+  const h    = appData.habits.find(h=>h.id===slot.habitId); if(!h) return;
+
+  // All links (fallback if no plan selected)
+  const allLinksHtml = (h.links&&h.links.length)
+    ? h.links.map(l=>linkItemHtml(l)).join('') : '';
+
+  // Plans
+  const plansHtml = (h.plans&&h.plans.length)
+    ? `<div class="section-title">Notfallpläne</div>
+       <div class="plan-btn-row">
+         ${h.plans.map((p,pi)=>`
+           <button class="plan-select-btn${slot.activePlan===pi?' plan-active':''}"
+             onclick="selectPlan('${sid}','${wk}',${pi})">
+             <div class="plan-dot" style="background:${h.color}"></div>
+             <div class="plan-info">
+               <div class="plan-name">${p.name}</div>
+               <div class="plan-duration">${p.duration}</div>
+             </div>
+             <div class="plan-arrow">${slot.activePlan===pi?'✓':'›'}</div>
+           </button>`).join('')}
+       </div>
+       <div class="plan-links-wrap" id="plan-links-${sid}">
+         ${renderPlanLinks(h, slot.activePlan)}
+       </div>` : '';
+
+  const notesHtml = h.notes
+    ? `<div class="section-title">Notizen</div><div class="notes-box">${h.notes}</div>` : '';
+
+  // Show all links only if no plan active and links exist
+  const linksSection = (!h.plans||!h.plans.length) && allLinksHtml
+    ? `<div class="section-title">YouTube-Videos</div>${allLinksHtml}` : '';
+
+  document.getElementById('detail-content').innerHTML=`
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+      <div style="width:12px;height:12px;border-radius:50%;background:${h.color}"></div>
+      <div class="sheet-title">${h.name}</div></div>
+    <div class="sheet-sub">${h.category}${slot.activePlan!==null&&slot.activePlan!==undefined&&h.plans?
+      ' · '+h.plans[slot.activePlan].name:''}</div>
+    ${plansHtml}${linksSection}${notesHtml}
+    <button class="close-btn" onclick="closeOvBtn('detail-overlay')">Schließen</button>`;
+
+  // Store refs for live update
+  document.getElementById('detail-overlay').dataset.sid = sid;
+  document.getElementById('detail-overlay').dataset.wk  = wk;
+  document.getElementById('detail-overlay').classList.add('open');
+}
+
+function renderPlanLinks(h, activePlan){
+  if(activePlan===null||activePlan===undefined) return
+    `<p style="font-size:13px;color:var(--text3);padding-top:6px;text-align:center">
+      ↑ Plan antippen um Videos zu sehen
+    </p>`;
+  const p = h.plans[activePlan]; if(!p) return '';
+  const planLinks = p.links||[];
+  if(!planLinks.length)
+    return `<p style="font-size:13px;color:var(--text3);padding-top:6px">Kein Video für diesen Plan hinterlegt.</p>`;
+  return `<div class="section-title">Videos für diesen Plan</div>
+    ${planLinks.map(l=>linkItemHtml(l)).join('')}`;
+}
+
+function linkItemHtml(l){
+  return `<a class="link-item" href="${esc(l.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">
+    <span class="link-icon">▶️</span>
+    <span class="link-label">${esc(l.label)}</span>
+    <span class="link-arrow-ext">↗</span></a>`;
+}
+
+function selectPlan(sid, wk, pi){
+  const slot = appData.weeks[wk][sid]; if(!slot) return;
+  // Toggle off if already active
+  slot.activePlan = slot.activePlan===pi ? null : pi;
+  saveApp();
+
+  const h = appData.habits.find(h=>h.id===slot.habitId);
+
+  // Update buttons live
+  document.querySelectorAll('.plan-select-btn').forEach((btn,i)=>{
+    btn.classList.toggle('plan-active', slot.activePlan===i);
+    btn.querySelector('.plan-arrow').textContent = slot.activePlan===i ? '✓' : '›';
+  });
+
+  // Update links section live
+  const linksWrap = document.getElementById(`plan-links-${sid}`);
+  if(linksWrap) linksWrap.innerHTML = renderPlanLinks(h, slot.activePlan);
+
+  // Update sheet subtitle
+  const sub = document.querySelector('#detail-overlay .sheet-sub');
+  if(sub) sub.textContent = h.category + (slot.activePlan!==null&&slot.activePlan!==undefined&&h.plans?
+    ' · '+h.plans[slot.activePlan].name:'');
+
+  renderWeek();
+  showToast(slot.activePlan!==null ? `Plan: ${h.plans[slot.activePlan].name}` : 'Plan zurückgesetzt');
+}
+
+// ─── MOVE SHEET ───────────────────────────────────────────────────────────────
+let moveCtx = null;
+function openMove(e, sid, wk){
+  e.stopPropagation(); moveCtx={sid,wk};
+  const slot  = appData.weeks[wk][sid];
+  const h     = appData.habits.find(h=>h.id===slot.habitId);
+  const dates = getWeekDates(weekOffset);
+  document.getElementById('move-content').innerHTML=`
+    <div class="sheet-title">Verschieben</div>
+    <div class="sheet-sub">${h.name} → Ziel-Tag wählen</div>
+    <div class="move-days">${dates.map((d,i)=>`
+      <button class="move-day-btn${i===slot.actualDay?' current-day':''}" onclick="moveToDay(${i})">
+        <div class="move-day-name">${DAY_NAMES[i]}</div>
+        <div class="move-day-num">${d.getDate()}</div></button>`).join('')}</div>
+    <button class="close-btn" onclick="closeOvBtn('move-overlay')">Abbrechen</button>`;
+  document.getElementById('move-overlay').classList.add('open');
+}
+function moveToDay(targetDay){
+  const {sid,wk}=moveCtx; const slot=appData.weeks[wk][sid]; if(!slot) return;
+  if(slot.actualDay===targetDay){closeOvBtn('move-overlay');return;}
+  slot.movedFrom = slot.movedFrom!==null&&slot.movedFrom!==undefined ? slot.movedFrom : slot.actualDay;
+  slot.actualDay = targetDay; saveApp();
+  closeOvBtn('move-overlay');
+  selectedDay=targetDay; renderWeek();
+  showToast(`Verschoben auf ${DAY_FULL[targetDay]}`);
+}
+
+// ─── OVERLAY HELPERS ──────────────────────────────────────────────────────────
+function closeOv(id,e){ if(e.target===document.getElementById(id)) closeOvBtn(id); }
+function closeOvBtn(id){ document.getElementById(id).classList.remove('open'); }
+
+// ─── GYM TRACKER ─────────────────────────────────────────────────────────────
+// Each exercise has: name, muscles, defaultSets (count), repRange (W1/W2), notes, videoUrl
+const GYM_TEMPLATES = [
+  {
+    name: 'Workout A – Full Body', color: '#fb923c',
+    description: 'Mo / Vollkörper A',
+    exercises: [
+      { name:'Dumbbell Bench Press',              muscles:'Chest · Front Delts · Triceps',
+        defaultSets:2, repRange:'8–10 (W1) → 11–13 (W2)', notes:'Kontrollierte Negative, keine Ellbogen hyperextended' },
+      { name:'Chest-Supported T-Bar Row',         muscles:'Lats · Rear Delts · Upper Back · Biceps',
+        defaultSets:2, repRange:'7+ (W1) → 10–12 (W2)',   notes:'Brust liegt auf der Pad – kein Schwung' },
+      { name:'Plate-Loaded Leg Press',            muscles:'Adductors · Glutes · Quads',
+        defaultSets:2, repRange:'8–10 (W1) → 11–13 (W2)', notes:'Füße schulterbreit, tief gehen ohne Becken kippen' },
+      { name:'Dumbbell Fly',                      muscles:'Chest · Front Delts',
+        defaultSets:2, repRange:'9+ (W1) → 11–13 (W2)',   notes:'Leichte Beugung im Ellbogen, Stretch unten spüren' },
+      { name:'Seated Dumbbell Lateral Raise',     muscles:'Side Delts · Front Delts · Upper Traps',
+        defaultSets:2, repRange:'9+ (W1) → 11–13 (W2)',   notes:'Pinky leicht höher als Daumen, kein Schwung' },
+      { name:'Seated DB Finger Flexion Wrist Curl', muscles:'Forearms',
+        defaultSets:2, repRange:'9+ (W1) → 11–13 (W2)',   notes:'Langsam, volle Bewegung, leichtes Gewicht reicht' },
+      { name:'Incline Dumbbell Biceps Curl',      muscles:'Biceps',
+        defaultSets:2, repRange:'9+ (W1) → 11–13 (W2)',   notes:'Bank auf 45°, Oberarm bleibt hinten – kein Schwung' },
+      { name:'Kneeling Cable Crunch',             muscles:'Abs · Obliques',
+        defaultSets:2, repRange:'9+ (W1) → 11–13 (W2)',   notes:'Ellbogen zu den Knien, Crunch aus dem Bauch' }
+    ]
+  },
+  {
+    name: 'Workout B – Full Body', color: '#a78bfa',
+    description: 'Sa / Vollkörper B',
+    exercises: [
+      { name:'Seated Dumbbell Overhead Press',    muscles:'Front Delts · Serratus · Side Delts',
+        defaultSets:2, repRange:'8–10 (W1) → 11–13 (W2)', notes:'Sitzen aufrecht, keine Hohlkreuz-Kompensation' },
+      { name:'Weighted Chin-Up',                  muscles:'Biceps · Lats · Forearms · Rear Delts',
+        defaultSets:2, repRange:'7+ (W1) → 10–12 (W2)',   notes:'Schulterblätter runter vor dem Zug, volle Extension unten' },
+      { name:'Dumbbell Romanian Deadlift',        muscles:'Adductors · Glutes · Hamstrings',
+        defaultSets:2, repRange:'8–10 (W1) → 11–13 (W2)', notes:'Rücken gerade, Hüfte schiebt nach hinten, Dehnung spüren' },
+      { name:'Neutral Grip Pec Deck Fly',         muscles:'Chest · Front Delts',
+        defaultSets:2, repRange:'9+ (W1) → 11–13 (W2)',   notes:'Volle Kontraktion vorne, kontrolliert zurück' },
+      { name:'Dual Cable Lateral Raise',          muscles:'Side Delts · Front Delts · Upper Traps',
+        defaultSets:2, repRange:'9+ (W1) → 11–13 (W2)',   notes:'Kabel kreuzen vor dem Körper, gleichmäßiger Bogen' },
+      { name:'Dead Hang',                         muscles:'Forearms · Lats · Shoulders',
+        defaultSets:2, repRange:'Standard Set',            notes:'So lange wie möglich, Schultern aktiv unten halten' },
+      { name:'Single Arm DB Preacher Curl',       muscles:'Biceps',
+        defaultSets:2, repRange:'9+ (W1) → 11–13 (W2)',   notes:'Oberarm liegt flach auf Pad, volle Beugung oben' }
+    ]
+  },
+  { name:'Benutzerdefiniert', color:'#60a5fa', description:'Eigene Übungen', exercises:[] }
+];
+
+function renderGymList(){
+  const sessions = [...(appData.gymSessions||[])].reverse();
+  const list = document.getElementById('gym-list');
+  if(!sessions.length){
+    list.innerHTML=`<div class="empty-state"><div class="empty-icon">🏋️</div>
+      <div class="empty-text">Noch keine Gym-Session.<br>Tippe "+ Session" um loszulegen.</div></div>`;
+    return;
+  }
+  list.innerHTML = sessions.map((s,ri)=>{
+    const idx = appData.gymSessions.length-1-ri;
+    const totalSets = s.exercises.reduce((a,ex)=>a+(ex.sets||[]).length,0);
+    const totalVol  = calcVolume(s);
+    const isA = s.name&&s.name.includes('A');
+    const isB = s.name&&s.name.includes('B');
+    const badge = isA ? `<span style="font-size:10px;font-weight:600;background:rgba(251,146,60,.15);color:#fb923c;padding:2px 7px;border-radius:6px">A</span>`
+                : isB ? `<span style="font-size:10px;font-weight:600;background:rgba(167,139,250,.15);color:#a78bfa;padding:2px 7px;border-radius:6px">B</span>` : '';
+    return `<div class="gym-session-card" onclick="openGymSession(${idx})">
+      <div class="gym-session-head">
+        <div class="gym-session-type" style="background:${s.color||'#888'}"></div>
+        <div class="gym-session-name">${s.name||'Session'} ${badge}</div>
+        <div class="gym-session-date">${formatDate(s.date)}</div>
+      </div>
+      <div class="gym-session-meta">${s.exercises.length} Übungen · ${totalSets} Sätze · ${totalVol} kg Vol.</div>
+    </div>`;
+  }).join('');
+}
+
+function calcVolume(session){
+  let v=0;
+  (session.exercises||[]).forEach(ex=>{
+    (ex.sets||[]).forEach(set=>{ v+=(parseFloat(set.weight)||0)*(parseInt(set.reps)||0); });
+  });
+  return Math.round(v);
+}
+
+function formatDate(iso){
+  if(!iso) return '–';
+  const d=new Date(iso);
+  return d.toLocaleDateString('de-DE',{weekday:'short',day:'numeric',month:'short'});
+}
+
+// Find last session with same name for "previous values"
+function getLastSession(name, currentIdx){
+  for(let i=currentIdx-1;i>=0;i--){
+    if(appData.gymSessions[i].name===name) return appData.gymSessions[i];
+  }
+  return null;
+}
+
+function getPrevValue(sessionIdx, exName, setIdx, field){
+  const last = getLastSession(appData.gymSessions[sessionIdx]?.name, sessionIdx);
+  if(!last) return null;
+  const ex = (last.exercises||[]).find(e=>e.name===exName);
+  if(!ex || !ex.sets || !ex.sets[setIdx]) return null;
+  return ex.sets[setIdx][field];
+}
+
+// ─── NEW SESSION ──────────────────────────────────────────────────────────────
+let editingSessionIdx = null;
+
+function openNewSession(){
+  editingSessionIdx = null;
+  document.getElementById('gym-content').innerHTML=`
+    <div class="sheet-title">Neue Session</div>
+    <div class="sheet-sub">Vorlage wählen:</div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px">
+      ${GYM_TEMPLATES.map((t,i)=>`
+        <button style="background:var(--bg3);border:1px solid var(--border2);border-radius:12px;padding:13px 14px;
+          display:flex;align-items:center;gap:12px;cursor:pointer;font-family:var(--font);text-align:left;
+          transition:border-color .15s;" onmouseover="this.style.borderColor='var(--accent)'"
+          onmouseout="this.style.borderColor='var(--border2)'" onclick="startSessionFromTemplate(${i})">
+          <div style="width:10px;height:10px;border-radius:50%;background:${t.color};flex-shrink:0"></div>
+          <div style="flex:1">
+            <div style="font-size:14px;font-weight:500;color:var(--text)">${t.name}</div>
+            ${t.description?`<div style="font-size:11px;color:var(--text3);margin-top:1px">${t.description}</div>`:''}
+          </div>
+          ${t.exercises.length?`<span style="font-size:12px;color:var(--text3)">${t.exercises.length} Übungen</span>`:''}
+        </button>`).join('')}
+    </div>
+    <button class="close-btn" onclick="closeOvBtn('gym-overlay')">Abbrechen</button>`;
+  document.getElementById('gym-overlay').classList.add('open');
+}
+
+function startSessionFromTemplate(ti){
+  const t = GYM_TEMPLATES[ti];
+  const session = {
+    name: t.name, color: t.color,
+    date: new Date().toISOString().slice(0,10),
+    exercises: t.exercises.map(ex => {
+      // Support both old string format and new rich object format
+      if(typeof ex === 'string') return { name:ex, sets:[{reps:'',weight:''}], videoUrl:'' };
+      const sets = [];
+      for(let i=0; i < (ex.defaultSets||2); i++) sets.push({reps:'',weight:''});
+      return { name:ex.name, muscles:ex.muscles||'', repRange:ex.repRange||'', notes:ex.notes||'', sets, videoUrl:ex.videoUrl||'' };
+    })
+  };
+  if(editingSessionIdx===null){
+    appData.gymSessions.push(session);
+    editingSessionIdx = appData.gymSessions.length-1;
+  } else {
+    appData.gymSessions[editingSessionIdx] = session;
+  }
+  saveApp();
+  renderSessionEditor(editingSessionIdx);
+}
+
+function openGymSession(idx){
+  editingSessionIdx = idx;
+  renderSessionEditor(idx);
+  document.getElementById('gym-overlay').classList.add('open');
+}
+
+function renderSessionEditor(idx){
+  const s    = appData.gymSessions[idx];
+  const last = getLastSession(s.name, idx);
+  const vol  = calcVolume(s);
+
+  const exHtml = s.exercises.map((ex,ei)=>{
+    const prevEx = last ? (last.exercises||[]).find(e=>e.name===ex.name) : null;
+
+    // Progress indicator vs last session
+    let progressHtml = '';
+    if(prevEx){
+      const prevVol = (prevEx.sets||[]).reduce((a,set)=>(a+(parseFloat(set.weight)||0)*(parseInt(set.reps)||0)),0);
+      const curVol  = (ex.sets||[]).reduce((a,set)=>(a+(parseFloat(set.weight)||0)*(parseInt(set.reps)||0)),0);
+      if(prevVol>0 && curVol>0){
+        const diff = curVol - prevVol;
+        const pct  = Math.round((diff/prevVol)*100);
+        const col  = diff>=0 ? '#34d399' : '#f87171';
+        const sym  = diff>=0 ? '↑' : '↓';
+        progressHtml = `<span style="font-size:11px;font-family:var(--mono);color:${col};margin-left:auto">${sym}${Math.abs(pct)}% Vol.</span>`;
+      }
+    }
+
+    const setsTarget = ex.defaultSets || ex.sets.length || 2;
+    const setsHtml = (ex.sets||[]).map((set,si)=>{
+      const pReps   = prevEx&&prevEx.sets&&prevEx.sets[si] ? prevEx.sets[si].reps   : null;
+      const pWeight = prevEx&&prevEx.sets&&prevEx.sets[si] ? prevEx.sets[si].weight : null;
+      // highlight if this set is "extra" beyond the target
+      const isExtra = si >= setsTarget;
+      return `<tr${isExtra?' style="opacity:.5"':''}>
+        <td class="set-num" style="${isExtra?'color:var(--text3)':''}">S${si+1}${isExtra?'*':''}</td>
+        <td>
+          <input class="set-input" type="number" min="0" placeholder="–" value="${set.reps||''}"
+            oninput="updSet(${idx},${ei},${si},'reps',this.value)">
+          ${pReps!==null?`<div class="prev-val">${pReps}</div>`:''}
+        </td>
+        <td>
+          <input class="set-input" type="number" min="0" step="0.5" placeholder="–" value="${set.weight||''}"
+            oninput="updSet(${idx},${ei},${si},'weight',this.value)">
+          ${pWeight!==null?`<div class="prev-val">${pWeight}</div>`:''}
+        </td>
+        <td>
+          <button onclick="delSet(${idx},${ei},${si})" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:0 4px;">✕</button>
+        </td>
+      </tr>`;
+    }).join('');
+    const videoUrl = ex.videoUrl||'';
+    const hasVideo = videoUrl.trim().length>0;
+    const ph = getPhaseForTemplate(s.name);
+    const tgt = computeRepTarget(ex.repRange||'', ph.block);
+    return `<div class="exercise-block" id="ex-${idx}-${ei}">
+      <div class="exercise-name-row">
+        <input class="exercise-name-input" value="${esc(ex.name)}" placeholder="Übungsname"
+          oninput="updExName(${idx},${ei},this.value)">
+        <button class="del-exercise-btn" onclick="delExercise(${idx},${ei})">✕</button>
+      </div>
+      ${ex.muscles?`<div style="font-size:11px;color:var(--text3);margin-bottom:6px;display:flex;align-items:center;gap:6px">
+        <span>${ex.muscles}</span>${progressHtml}</div>`
+        : progressHtml ? `<div style="display:flex;justify-content:flex-end;margin-bottom:4px">${progressHtml}</div>` : ''}
+      <div style="display:flex;gap:7px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:5px;background:var(--bg4);border-radius:7px;padding:4px 10px">
+          <span style="font-size:16px;font-weight:700;color:var(--text);font-family:var(--mono)">${setsTarget}</span>
+          <span style="font-size:10px;color:var(--text3);line-height:1.2">Sätze<br>heute</span>
+        </div>
+        ${ex.repRange?`<div style="flex:1;font-size:11px;background:rgba(200,240,68,.08);border:1px solid rgba(200,240,68,.15);border-radius:7px;padding:4px 9px;color:#c8f044">
+          <span style="opacity:.6">Ziel: </span>${tgt.text}${tgt.weightBump?' · <span style="color:#34d399">⬆ Gewicht!</span>':''}
+        </div>`:''}
+      </div>
+      <table class="sets-table">
+        <thead><tr>
+          <th style="width:28px"></th>
+          <th>Wdh</th><th>kg</th><th style="width:28px"></th>
+        </tr>
+        ${last?`<tr><td></td><td style="font-size:10px;color:var(--text3);text-align:center;padding-bottom:4px" colspan="2">↑ letzte Session</td><td></td></tr>`:''}</thead>
+        <tbody>${setsHtml}</tbody>
+      </table>
+      <button class="add-set-btn" onclick="addSet(${idx},${ei})">+ Satz hinzufügen</button>
+      ${ex.notes?`<div style="font-size:11px;color:var(--text3);border-left:2px solid var(--border2);padding:4px 8px;margin-top:8px;line-height:1.5">${ex.notes}</div>`:''}
+      <div class="ex-video-row">
+        <input class="ex-video-input" placeholder="▶ YouTube-Link zur Ausführung (optional)"
+          value="${esc(videoUrl)}" oninput="updExVideo(${idx},${ei},this.value)">
+        ${hasVideo?`<button class="ex-video-open" onclick="openExVideo(${idx},${ei})">▶ Öffnen</button>`:''}
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('gym-content').innerHTML=`
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <div style="width:12px;height:12px;border-radius:50%;background:${s.color}"></div>
+      <div class="sheet-title" style="margin:0">${s.name}</div>
+      <span style="font-size:12px;color:var(--text2);margin-left:auto">${formatDate(s.date)}</span>
+    </div>
+    ${(()=>{
+      const phase = getPhaseForTemplate(s.name);
+      const weightBump = phase.block>0 && (phase.block%2===0);
+      return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+        <div class="prog-badge">📈 ${phase.label}</div>
+        ${last?`<span style="font-size:11px;color:var(--text3)">↑ Vorwoche geladen</span>`:'<span style="font-size:11px;color:var(--text3)">Erste Session</span>'}
+        ${weightBump?`<span style="font-size:11px;font-weight:600;color:#34d399">⬆ Gewicht erhöhen!</span>`:''}
+      </div>`;
+    })()}
+    <div class="stats-row">
+      <div class="stat-pill"><div class="stat-pill-val">${s.exercises.length}</div><div class="stat-pill-lbl">Übungen</div></div>
+      <div class="stat-pill"><div class="stat-pill-val" id="sp-sets">${s.exercises.reduce((a,e)=>a+(e.sets||[]).length,0)}</div><div class="stat-pill-lbl">Sätze</div></div>
+      <div class="stat-pill"><div class="stat-pill-val" id="sp-vol">${vol}</div><div class="stat-pill-lbl">kg Volumen</div></div>
+    </div>
+    ${exHtml}
+    <button class="add-exercise-btn" onclick="addExercise(${idx})">+ Übung hinzufügen</button>
+    <button class="save-btn" style="width:100%;margin-bottom:8px" onclick="finishSession(${idx})">✓ Session abschließen & speichern</button>
+    <button onclick="deleteSession(${idx})" style="background:none;border:1px solid rgba(248,113,113,.25);border-radius:12px;padding:11px;font-size:13px;color:var(--danger);cursor:pointer;font-family:var(--font);width:100%">Session löschen</button>`;
+}
+
+function updSet(idx,ei,si,field,val){
+  const s=appData.gymSessions[idx];
+  if(!s||!s.exercises[ei]||!s.exercises[ei].sets[si]) return;
+  s.exercises[ei].sets[si][field]=val;
+  updateStatsBar(idx);
+  saveApp();
+}
+function updExName(idx,ei,val){ const s=appData.gymSessions[idx]; if(s&&s.exercises[ei]) s.exercises[ei].name=val; saveApp(); }
+function updExVideo(idx,ei,val){
+  const s=appData.gymSessions[idx]; if(!s||!s.exercises[ei]) return;
+  s.exercises[ei].videoUrl=val; saveApp();
+  // Show/hide open button live
+  const row=document.querySelector(`#ex-${idx}-${ei} .ex-video-row`);
+  if(!row) return;
+  let btn=row.querySelector('.ex-video-open');
+  if(val.trim()){
+    if(!btn){ btn=document.createElement('button'); btn.className='ex-video-open';
+      btn.textContent='▶ Öffnen'; btn.onclick=()=>openExVideo(idx,ei); row.appendChild(btn); }
+  } else { if(btn) btn.remove(); }
+}
+function openExVideo(idx,ei){
+  const s=appData.gymSessions[idx]; if(!s||!s.exercises[ei]) return;
+  const url=s.exercises[ei].videoUrl; if(!url) return;
+  window.open(url,'_blank','noopener,noreferrer');
+}
+function addSet(idx,ei){
+  const s=appData.gymSessions[idx]; if(!s||!s.exercises[ei]) return;
+  s.exercises[ei].sets.push({reps:'',weight:''});
+  saveApp(); renderSessionEditor(idx);
+}
+function delSet(idx,ei,si){
+  const s=appData.gymSessions[idx]; if(!s||!s.exercises[ei]) return;
+  if(s.exercises[ei].sets.length<=1){showToast('Mindestens 1 Satz');return;}
+  s.exercises[ei].sets.splice(si,1);
+  saveApp(); renderSessionEditor(idx);
+}
+function addExercise(idx){
+  const s=appData.gymSessions[idx]; if(!s) return;
+  s.exercises.push({name:'',sets:[{reps:'',weight:''}]});
+  saveApp(); renderSessionEditor(idx);
+}
+function delExercise(idx,ei){
+  const s=appData.gymSessions[idx]; if(!s) return;
+  if(s.exercises.length<=1){showToast('Mindestens 1 Übung');return;}
+  s.exercises.splice(ei,1);
+  saveApp(); renderSessionEditor(idx);
+}
+function updateStatsBar(idx){
+  const s=appData.gymSessions[idx]; if(!s) return;
+  const sets=s.exercises.reduce((a,e)=>a+(e.sets||[]).length,0);
+  const vol=calcVolume(s);
+  const sv=document.getElementById('sp-sets'); if(sv) sv.textContent=sets;
+  const vv=document.getElementById('sp-vol');  if(vv) vv.textContent=vol;
+}
+function finishSession(idx){
+  appData.gymSessions[idx].completed = true;
+  saveApp(); closeOvBtn('gym-overlay'); renderGymList();
+  showToast('✓ Session gespeichert');
+}
+function deleteSession(idx){
+  if(!confirm('Session wirklich löschen?')) return;
+  appData.gymSessions.splice(idx,1);
+  saveApp(); closeOvBtn('gym-overlay'); renderGymList();
+  showToast('Session gelöscht');
+}
+
+// ─── SETTINGS ─────────────────────────────────────────────────────────────────
+function renderSettings(){
+  // Habit cards
+  const habitCards = appData.habits.map(h=>`
+    <div class="settings-card" id="sc-${h.id}">
+      <div class="settings-card-header" onclick="toggleCard('${h.id}')">
+        <div class="settings-color-dot" style="background:${h.color}"></div>
+        <div class="settings-habit-name">${h.name}</div>
+        <div class="settings-habit-days">${(h.defaultDays||[]).map(d=>DAY_NAMES[d]).join(', ')}</div>
+        <div class="settings-chevron">›</div>
+      </div>
+      <div class="settings-body">${buildHabitForm(h)}</div>
+    </div>`).join('');
+
+  // Gym template cards
+  const gymCards = GYM_TEMPLATES.filter(t=>t.exercises.length>0).map((t,ti)=>{
+    const sessCount = (appData.gymSessions||[]).filter(s=>s.name===t.name).length;
+    const phase = getPhaseForTemplate(t.name);
+    return `<div class="gym-tmpl-card" id="gtc-${ti}">
+      <div class="gym-tmpl-head" onclick="toggleGymTmpl(${ti})">
+        <div class="gym-tmpl-dot" style="background:${t.color}"></div>
+        <div class="gym-tmpl-name">${t.name}</div>
+        <div class="gym-tmpl-meta">${sessCount} Sessions · ${phase.label}</div>
+        <div class="gym-tmpl-chev">›</div>
+      </div>
+      <div class="gym-tmpl-body" id="gtb-${ti}">${buildGymTmplForm(t,ti)}</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('settings-list').innerHTML =
+    habitCards +
+    `<div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin:20px 0 10px">
+       🏋️ Workout-Vorlagen
+     </div>` +
+    gymCards;
+}
+
+function toggleCard(id){
+  document.getElementById('sc-'+id).classList.toggle('expanded');
+}
+function toggleGymTmpl(ti){
+  document.getElementById('gtc-'+ti).classList.toggle('expanded');
+}
+
+// ─── PROGRESSION ENGINE ───────────────────────────────────────────────────────
+// Phase = how many completed sessions of this template exist
+// Every 2 sessions = 1 "week" block. After each block: weight suggestion +2.5kg, reps reset to low end.
+function getPhaseForTemplate(name){
+  const count = (appData.gymSessions||[]).filter(s=>s.name===name && s.completed).length;
+  const block  = Math.floor(count/2); // 0=W1, 1=W2, 2=W3 ...
+  const sessionInBlock = count % 2;   // 0 or 1
+  return {
+    block, sessionInBlock, count,
+    label: `W${block+1} · Session ${sessionInBlock+1}/2`
+  };
+}
+
+// Given a base repRange string like "8–10 (W1) → 11–13 (W2)", compute current target
+function computeRepTarget(repRange, block){
+  // After W1 block (block>=1): use high end
+  // After W2 block (block>=2): reset + signal weight increase
+  if(!repRange || repRange==='Standard Set') return { text: repRange||'Standard Set', weightBump: false };
+  // Parse first number range as base
+  const m = repRange.match(/(\d+)[–-](\d+)/);
+  if(!m) return { text: repRange, weightBump: false };
+  const lo = parseInt(m[1]), hi = parseInt(m[2]);
+  const cycle = block % 2; // 0=low phase, 1=high phase
+  const weightBump = block>0 && cycle===0; // every even block after first = bump weight
+  if(cycle===0) return { text:`${lo}–${hi} Wdh`, weightBump };
+  return { text:`${hi}–${hi+2} Wdh`, weightBump };
+}
+
+function buildGymTmplForm(t, ti){
+  const phase = getPhaseForTemplate(t.name);
+  const phaseBar = `<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+    <div class="prog-badge">📈 ${phase.label}</div>
+    <span style="font-size:11px;color:var(--text3)">${phase.count} Sessions abgeschlossen</span>
+  </div>`;
+
+  const exHtml = t.exercises.map((ex,ei)=>{
+    const tgt = computeRepTarget(ex.repRange||'', phase.block);
+    return `<div class="ex-edit-block" id="gte-${ti}-${ei}">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+        <input class="ex-edit-name" value="${esc(ex.name)}" placeholder="Übungsname"
+          oninput="updTmplExName(${ti},${ei},this.value)">
+        <button class="ex-edit-del" onclick="delTmplEx(${ti},${ei})">✕</button>
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Muskeln</span>
+        <input class="ex-edit-input" value="${esc(ex.muscles||'')}" placeholder="z.B. Chest · Triceps"
+          oninput="updTmplExField(${ti},${ei},'muscles',this.value)">
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Wdh-Ziel</span>
+        <input class="ex-edit-input" value="${esc(ex.repRange||'')}" placeholder="z.B. 8–10 (W1) → 11–13 (W2)"
+          oninput="updTmplExField(${ti},${ei},'repRange',this.value)">
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Sätze</span>
+        <input class="ex-edit-input" type="number" min="1" max="10" value="${ex.defaultSets||2}"
+          style="flex:0 0 60px" oninput="updTmplExField(${ti},${ei},'defaultSets',parseInt(this.value)||2)">
+        <span style="font-size:11px;color:var(--text3);margin-left:4px">Voreinstellung</span>
+      </div>
+      <div class="ex-edit-row">
+        <span class="ex-edit-label">Notiz</span>
+        <input class="ex-edit-input" value="${esc(ex.notes||'')}" placeholder="Technik-Hinweis"
+          oninput="updTmplExField(${ti},${ei},'notes',this.value)">
+      </div>
+      <div style="margin-top:6px;font-size:11px;color:var(--accent);font-family:var(--mono)">
+        → Aktuelles Ziel: ${tgt.text}${tgt.weightBump?' · ⬆ Gewicht erhöhen!':''}
+      </div>
+    </div>`;
+  }).join('');
+
+  return phaseBar + exHtml +
+    `<button class="add-link-btn" style="margin-top:4px" onclick="addTmplEx(${ti})">+ Übung hinzufügen</button>
+     <button class="save-btn" style="width:100%;margin-top:12px" onclick="saveTmpl(${ti})">✓ Vorlage speichern</button>`;
+}
+
+// Gym template editing functions
+function updTmplExName(ti,ei,v){ GYM_TEMPLATES[ti].exercises[ei].name=v; }
+function updTmplExField(ti,ei,field,v){ GYM_TEMPLATES[ti].exercises[ei][field]=v; }
+function delTmplEx(ti,ei){
+  if(GYM_TEMPLATES[ti].exercises.length<=1){showToast('Mindestens 1 Übung');return;}
+  GYM_TEMPLATES[ti].exercises.splice(ei,1);
+  document.getElementById('gtb-'+ti).innerHTML=buildGymTmplForm(GYM_TEMPLATES[ti],ti);
+}
+function addTmplEx(ti){
+  GYM_TEMPLATES[ti].exercises.push({name:'',muscles:'',repRange:'',defaultSets:2,notes:'',videoUrl:''});
+  document.getElementById('gtb-'+ti).innerHTML=buildGymTmplForm(GYM_TEMPLATES[ti],ti);
+  // Keep card expanded and scroll to new ex
+  document.getElementById('gtc-'+ti).classList.add('expanded');
+}
+function saveTmpl(ti){
+  // Persist templates into appData so they survive export/import
+  if(!appData.gymTemplates) appData.gymTemplates=[];
+  appData.gymTemplates[ti] = JSON.parse(JSON.stringify(GYM_TEMPLATES[ti]));
+  saveApp();
+  // Refresh header meta
+  renderSettings();
+  // Re-expand the card that was saved
+  const card = document.getElementById('gtc-'+ti);
+  if(card){ card.classList.add('expanded'); }
+  showToast('✓ Vorlage gespeichert');
+}
+
+function buildHabitForm(h){
+  // Each plan gets its own collapsible link editor
+  const plansHtml = (h.plans||[]).map((p,pi)=>`
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:11px;padding:11px 12px;margin-bottom:8px">
+      <div style="display:flex;gap:7px;align-items:center;margin-bottom:10px">
+        <div style="width:8px;height:8px;border-radius:50%;background:${h.color};flex-shrink:0"></div>
+        <input class="text-input" placeholder="Plan-Name (z.B. Kurze Version)"
+          value="${esc(p.name)}" oninput="updPlanName('${h.id}',${pi},this.value)"
+          style="flex:1">
+        <input class="text-input" placeholder="Min" value="${esc(p.duration)}"
+          oninput="updPlanDur('${h.id}',${pi},this.value)"
+          style="width:64px;flex-shrink:0">
+        <button onclick="delPlan('${h.id}',${pi})"
+          style="background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.25);border-radius:7px;
+          color:var(--danger);font-size:12px;padding:6px 9px;cursor:pointer;font-family:var(--font);flex-shrink:0">✕</button>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:7px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">
+        🎬 Videos für diesen Plan
+      </div>
+      <div id="pl-links-${h.id}-${pi}" style="display:flex;flex-direction:column;gap:6px;margin-bottom:7px">
+        ${(p.links||[]).map((l,li)=>planLinkRowHtml(h.id,pi,li,l)).join('')}
+      </div>
+      <button class="add-link-btn" onclick="addPlanLink('${h.id}',${pi})">+ Video hinzufügen</button>
+    </div>`).join('');
+
+  return `
+    <div class="field-label" style="margin-top:0">Name</div>
+    <input class="text-input" value="${esc(h.name)}" oninput="setHabitName('${h.id}',this.value)" placeholder="z.B. Stretching">
+
+    <div class="field-label">Farbe</div>
+    <div class="color-picker-row">${COLORS.map(c=>`
+      <div class="color-swatch${h.color===c?' selected':''}" style="background:${c}"
+        onclick="setHabitColor('${h.id}','${c}')"></div>`).join('')}</div>
+
+    <div class="field-label">Standard-Wochentage</div>
+    <div class="day-checkboxes">${DAY_NAMES.map((d,i)=>`
+      <button class="day-check-btn${(h.defaultDays||[]).includes(i)?' selected':''}"
+        onclick="toggleDay('${h.id}',${i})">${d}</button>`).join('')}</div>
+
+    <div class="field-label">Notfallpläne & Videos
+      <span style="font-weight:400;color:var(--text3);font-size:10px;margin-left:4px;text-transform:none;letter-spacing:0">
+        — jeder Plan hat eigene Videos
+      </span>
+    </div>
+    <div id="pl-${h.id}">${plansHtml}</div>
+    <button class="add-link-btn" onclick="addPlan('${h.id}')">+ Plan hinzufügen</button>
+
+    <button class="save-btn" style="width:100%;margin-top:16px" onclick="saveHabit('${h.id}')">✓ Speichern</button>
+    <button onclick="deleteHabit('${h.id}')"
+      style="width:100%;margin-top:8px;background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.3);
+      border-radius:12px;padding:13px;font-size:14px;color:var(--danger);cursor:pointer;font-family:var(--font)">
+      🗑 Gewohnheit löschen
+    </button>`;
+}
+
+function planLinkRowHtml(hid, pi, li, l){
+  return `<div id="plr-${hid}-${pi}-${li}" style="background:var(--bg4);border-radius:8px;padding:8px 10px">
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px">
+      <span style="font-size:11px;color:var(--text3)">Video ${li+1}</span>
+      ${l.url?`<a href="${esc(l.url)}" target="_blank" rel="noopener"
+        style="font-size:11px;color:#fb923c;text-decoration:none;margin-left:auto">▶ Test ↗</a>`:''}
+      <button onclick="delPlanLink('${hid}',${pi},${li})"
+        style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:12px;
+        padding:0 2px;${l.url?'':'margin-left:auto'}">✕</button>
+    </div>
+    <input class="text-input" placeholder="Bezeichnung" value="${esc(l.label||'')}"
+      oninput="updPlanLink('${hid}',${pi},${li},'label',this.value)"
+      style="margin-bottom:5px;font-size:12px;padding:6px 10px">
+    <input class="text-input" placeholder="https://youtube.com/watch?v=..." value="${esc(l.url||'')}"
+      oninput="updPlanLink('${hid}',${pi},${li},'url',this.value)"
+      style="font-size:12px;padding:6px 10px">
+  </div>`;
+}
+
+// Habit field updates
+function setHabitName(id,v){ const h=appData.habits.find(h=>h.id===id); if(h) h.name=v; }
+function setHabitColor(id,c){
+  const h=appData.habits.find(h=>h.id===id); if(!h) return; h.color=c;
+  document.querySelectorAll(`#sc-${id} .color-swatch`).forEach(sw=>
+    sw.classList.toggle('selected',sw.style.background===c||sw.style.backgroundColor===c));
+  document.querySelector(`#sc-${id} .settings-color-dot`).style.background=c;
+}
+function toggleDay(id,di){
+  const h=appData.habits.find(h=>h.id===id); if(!h) return;
+  if(!h.defaultDays) h.defaultDays=[];
+  const ix=h.defaultDays.indexOf(di);
+  if(ix===-1) h.defaultDays.push(di); else h.defaultDays.splice(ix,1);
+  document.querySelectorAll(`#sc-${id} .day-check-btn`).forEach((b,i)=>
+    b.classList.toggle('selected',h.defaultDays.includes(i)));
+}
+function updLinkLabel(id,li,v){ const h=appData.habits.find(h=>h.id===id); if(h&&h.links[li]) h.links[li].label=v; }
+function updLinkUrl(id,li,v)  { const h=appData.habits.find(h=>h.id===id); if(h&&h.links[li]) h.links[li].url=v; }
+// Plan-level link management
+function updPlanLink(hid,pi,li,field,val){
+  const h=appData.habits.find(h=>h.id===hid); if(!h||!h.plans[pi]||!h.plans[pi].links) return;
+  if(!h.plans[pi].links[li]) h.plans[pi].links[li]={label:'',url:''};
+  h.plans[pi].links[li][field]=val;
+}
+function addPlanLink(hid,pi){
+  const h=appData.habits.find(h=>h.id===hid); if(!h) return;
+  if(!h.plans[pi].links) h.plans[pi].links=[];
+  const li=h.plans[pi].links.length; h.plans[pi].links.push({label:'',url:''});
+  const wrap=document.getElementById(`pl-links-${hid}-${pi}`);
+  if(!wrap) return;
+  const div=document.createElement('div'); div.id=`plr-${hid}-${pi}-${li}`;
+  div.innerHTML=planLinkRowHtml(hid,pi,li,{label:'',url:''});
+  // planLinkRowHtml returns an outer div string, so inject inner html
+  wrap.insertAdjacentHTML('beforeend', planLinkRowHtml(hid,pi,li,{label:'',url:''}));
+}
+function delPlanLink(hid,pi,li){
+  const h=appData.habits.find(h=>h.id===hid); if(!h||!h.plans[pi]) return;
+  h.plans[pi].links.splice(li,1);
+  reRenderPlanLinks(hid,pi);
+}
+function reRenderPlanLinks(hid,pi){
+  const h=appData.habits.find(h=>h.id===hid); if(!h) return;
+  const wrap=document.getElementById(`pl-links-${hid}-${pi}`); if(!wrap) return;
+  wrap.innerHTML=(h.plans[pi].links||[]).map((l,li)=>planLinkRowHtml(hid,pi,li,l)).join('');
+}
+
+// Keep old stubs so nothing breaks if called
+function addLink(id){ addPlan(id); }
+function delLink(id,li){}
+function reRenderLinks(id){}
+function updLinkLabel(id,li,v){}
+function updLinkUrl(id,li,v){}
+function updPlanName(id,pi,v){ const h=appData.habits.find(h=>h.id===id); if(h&&h.plans&&h.plans[pi]) h.plans[pi].name=v; }
+function updPlanDur(id,pi,v) { const h=appData.habits.find(h=>h.id===id); if(h&&h.plans&&h.plans[pi]) h.plans[pi].duration=v; }
+function addPlan(id){
+  const h=appData.habits.find(h=>h.id===id); if(!h) return;
+  if(!h.plans) h.plans=[];
+  const pi=h.plans.length;
+  h.plans.push({name:'',duration:'',links:[]});
+  // Re-render the whole plans section so the new plan block appears correctly
+  document.getElementById('pl-'+id).innerHTML = (h.plans||[]).map((p,pi)=>`
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:11px;padding:11px 12px;margin-bottom:8px">
+      <div style="display:flex;gap:7px;align-items:center;margin-bottom:10px">
+        <div style="width:8px;height:8px;border-radius:50%;background:${h.color};flex-shrink:0"></div>
+        <input class="text-input" placeholder="Plan-Name" value="${esc(p.name)}"
+          oninput="updPlanName('${id}',${pi},this.value)" style="flex:1">
+        <input class="text-input" placeholder="Min" value="${esc(p.duration)}"
+          oninput="updPlanDur('${id}',${pi},this.value)" style="width:64px;flex-shrink:0">
+        <button onclick="delPlan('${id}',${pi})"
+          style="background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.25);border-radius:7px;
+          color:var(--danger);font-size:12px;padding:6px 9px;cursor:pointer;font-family:var(--font);flex-shrink:0">✕</button>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:7px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">🎬 Videos für diesen Plan</div>
+      <div id="pl-links-${id}-${pi}" style="display:flex;flex-direction:column;gap:6px;margin-bottom:7px">
+        ${(p.links||[]).map((l,li)=>planLinkRowHtml(id,pi,li,l)).join('')}
+      </div>
+      <button class="add-link-btn" onclick="addPlanLink('${id}',${pi})">+ Video hinzufügen</button>
+    </div>`).join('');
+}
+function delPlan(id,pi){
+  const h=appData.habits.find(h=>h.id===id); if(!h||!h.plans) return;
+  h.plans.splice(pi,1);
+  addPlan._rerender(id,h); // reuse render logic via addPlan
+}
+// Attach rerender helper
+addPlan._rerender = function(id,h){
+  const el=document.getElementById('pl-'+id); if(!el) return;
+  el.innerHTML=(h.plans||[]).map((p,pi)=>`
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:11px;padding:11px 12px;margin-bottom:8px">
+      <div style="display:flex;gap:7px;align-items:center;margin-bottom:10px">
+        <div style="width:8px;height:8px;border-radius:50%;background:${h.color};flex-shrink:0"></div>
+        <input class="text-input" placeholder="Plan-Name" value="${esc(p.name)}"
+          oninput="updPlanName('${id}',${pi},this.value)" style="flex:1">
+        <input class="text-input" placeholder="Min" value="${esc(p.duration)}"
+          oninput="updPlanDur('${id}',${pi},this.value)" style="width:64px;flex-shrink:0">
+        <button onclick="delPlan('${id}',${pi})"
+          style="background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.25);border-radius:7px;
+          color:var(--danger);font-size:12px;padding:6px 9px;cursor:pointer;font-family:var(--font);flex-shrink:0">✕</button>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:7px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">🎬 Videos für diesen Plan</div>
+      <div id="pl-links-${id}-${pi}" style="display:flex;flex-direction:column;gap:6px;margin-bottom:7px">
+        ${(p.links||[]).map((l,li)=>planLinkRowHtml(id,pi,li,l)).join('')}
+      </div>
+      <button class="add-link-btn" onclick="addPlanLink('${id}',${pi})">+ Video hinzufügen</button>
+    </div>`).join('');
+};
+function saveHabit(id){
+  ensureWeek(currentWeekKey()); saveApp();
+  const h=appData.habits.find(h=>h.id===id);
+  document.querySelector(`#sc-${id} .settings-habit-name`).textContent=h.name;
+  document.querySelector(`#sc-${id} .settings-habit-days`).textContent=(h.defaultDays||[]).map(d=>DAY_NAMES[d]).join(', ');
+  showToast('✓ Gespeichert');
+}
+function deleteHabit(id){
+  if(!confirm('Gewohnheit wirklich löschen?')) return;
+  appData.habits=appData.habits.filter(h=>h.id!==id);
+  Object.keys(appData.weeks).forEach(wk=>{
+    Object.keys(appData.weeks[wk]).forEach(sid=>{
+      if(appData.weeks[wk][sid].habitId===id) delete appData.weeks[wk][sid];
+    });
+  });
+  saveApp(); renderSettings(); showToast('Gelöscht');
+}
+
+// ─── NEW HABIT ────────────────────────────────────────────────────────────────
+function openNewHabit(){
+  window._nh={id:'h'+Date.now(),name:'',color:COLORS[0],category:'Sonstiges',defaultDays:[],links:[],notes:'',plans:[]};
+  document.getElementById('new-habit-content').innerHTML=`
+    <div class="sheet-title">Neue Gewohnheit</div>
+    <div class="field-label" style="margin-top:0">Name</div>
+    <input class="text-input" id="nh-name" placeholder="z.B. Yoga, Laufen …" oninput="_nh.name=this.value">
+    <div class="field-label">Farbe</div>
+    <div class="color-picker-row">${COLORS.map(c=>`
+      <div class="color-swatch${c===_nh.color?' selected':''}" style="background:${c}"
+        onclick="_nh.color='${c}';this.closest('.color-picker-row').querySelectorAll('.color-swatch').forEach(s=>s.classList.remove('selected'));this.classList.add('selected')"></div>`).join('')}</div>
+    <div class="field-label">Standard-Wochentage</div>
+    <div class="day-checkboxes">${DAY_NAMES.map((d,i)=>`
+      <button class="day-check-btn" onclick="nhDay(this,${i})">${d}</button>`).join('')}</div>
+    <div class="card-actions" style="margin-top:20px">
+      <button class="save-btn" onclick="saveNewHabit()">✓ Anlegen</button>
+      <button class="close-btn" style="margin-top:0;flex:0 0 auto;padding:10px 16px" onclick="closeOvBtn('new-habit-overlay')">Abbrechen</button>
+    </div>`;
+  document.getElementById('new-habit-overlay').classList.add('open');
+}
+function nhDay(btn,i){
+  btn.classList.toggle('selected');
+  if(btn.classList.contains('selected')) _nh.defaultDays.push(i);
+  else _nh.defaultDays=_nh.defaultDays.filter(d=>d!==i);
+}
+function saveNewHabit(){
+  if(!_nh.name.trim()){showToast('Bitte Namen eingeben');return;}
+  appData.habits.push(_nh);
+  ensureWeek(currentWeekKey()); saveApp();
+  closeOvBtn('new-habit-overlay'); renderSettings();
+  showToast('✓ Gewohnheit angelegt');
+}
+
+// ─── DATA EXPORT / IMPORT ────────────────────────────────────────────────────
+function renderDataView(){
+  const raw = JSON.stringify(appData);
+  const kb  = (new Blob([raw]).size/1024).toFixed(1);
+  const habitCount   = (appData.habits||[]).length;
+  const weekCount    = Object.keys(appData.weeks||{}).length;
+  const sessionCount = (appData.gymSessions||[]).length;
+  const el = document.getElementById('storage-info');
+  if(el) el.innerHTML =
+    `Gewohnheiten: ${habitCount}<br>Gespeicherte Wochen: ${weekCount}<br>Gym-Sessions: ${sessionCount}<br>Dateigröße: ~${kb} KB`;
+}
+
+function exportJSON(){
+  const payload = {
+    exportedAt: new Date().toISOString(),
+    version: 4,
+    ...appData
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  const date = new Date().toISOString().slice(0,10);
+  a.href = url; a.download = `flexplan-backup-${date}.json`;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+  showToast('✓ Export heruntergeladen');
+}
+
+function importJSON(input){
+  const file = input.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const parsed = JSON.parse(e.target.result);
+      // Basic validation
+      if(!parsed.habits || !Array.isArray(parsed.habits))
+        throw new Error('Ungültiges Format');
+      const { exportedAt, version, ...data } = parsed;
+      if(!confirm(`Backup vom ${exportedAt ? exportedAt.slice(0,10) : '?'} laden?\nAlle aktuellen Daten werden überschrieben.`)){
+        input.value=''; return;
+      }
+      appData = { habits:[], weeks:{}, gymSessions:[], ...data };
+      saveApp();
+      renderDataView();
+      showToast('✓ Backup geladen');
+    } catch(err) {
+      showToast('Fehler: Ungültige Datei');
+    }
+    input.value='';
+  };
+  reader.readAsText(file);
+}
+
+function resetAll(){
+  if(!confirm('Wirklich ALLE Daten löschen?\nDieser Schritt kann nicht rückgängig gemacht werden.')) return;
+  if(!confirm('Sicher? Alle Gewohnheiten, Wochen und Gym-Sessions werden gelöscht.')) return;
+  localStorage.removeItem('fp3_data');
+  location.reload();
+}
+
+// ─── UTILS ────────────────────────────────────────────────────────────────────
+function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+let _toastT;
+function showToast(msg){
+  const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(_toastT); _toastT=setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+// Restore any user-edited templates from saved data
+if(appData.gymTemplates && Array.isArray(appData.gymTemplates)){
+  appData.gymTemplates.forEach((saved,i)=>{ if(saved && GYM_TEMPLATES[i]) Object.assign(GYM_TEMPLATES[i], saved); });
+}
+renderWeek();
+</script>
+
+
+</body></html>
